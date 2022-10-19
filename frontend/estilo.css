@@ -2,3 +2,37 @@
   padding: 0px;
   margin: 0px;
 }
+
+.component_nav {
+  margin-top: 5%;
+  margin-bottom: 3%;
+  background-color: #51d1f6;
+  border-radius: 5px;
+}
+
+.component-header {
+  color: var(--bs-purple);
+}
+
+.icono-principal {
+  color: aliceblue;
+  font-size: 35px;
+  text-align: center;
+}
+.titulo {
+  font-size: 30px;
+  font-family: Roboto;
+  font-weight: bold;
+  font-style: italic;
+  letter-spacing: 6px;
+  color: white;
+  text-align: left;
+}
+.icono-search {
+  color: aliceblue;
+  text-align: center;
+}
+.titulo-resultados {
+  font-weight: bold;
+  color: black;
+}
