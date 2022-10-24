@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>BD2: Proyecto 2</title>
+    <title>Proyecto 2</title>
     <!-- CSS only -->
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
@@ -28,7 +28,7 @@
       crossorigin="anonymous"
     ></script>
 
-    <link rel="stylesheet" href="estilo.css" />
+    <link rel="stylesheet" href="{{ url_for('static',filename ='estilo.css') }}" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css"
@@ -76,82 +76,40 @@
 
       <div class="row mb-3">
         <div class="col-6">
-          <div class="table-responsive">
+          <div class="table-responsive ">
             <table class="table caption-top">
               <caption>
                 <span class="titulo-resultados"> Top K - Python</span>
               </caption>
               <thead>
                 <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">First</th>
-                  <th scope="col">Last</th>
-                  <th scope="col">Handle</th>
-                  <th scope="col">#</th>
-                  <th scope="col">First</th>
-                  <th scope="col">Last</th>
-                  <th scope="col">Handle</th>
-                  <th scope="col">#</th>
-                  <th scope="col">First</th>
-                  <th scope="col">Last</th>
-                  <th scope="col">Handle</th>
+                  <th scope="col">ID</th>
+                  <th scope="col">SUBMITTER</th>
+                  <th scope="col">AUTHORS</th>
+                  <th scope="col">TITLE</th>
+                  <th scope="col">COMMENTS</th>
+                  <th scope="col">JOURNAL</th>
+                  <th scope="col">DOI</th>
+                  <th scope="col">ABSTRACT</th>
+                  <th scope="col">CATEGORIES</th>
+                  <th scope="col">VERSIONS</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="table_index">
+                {%for paper_search in data_papers_index%}
                 <tr>
-                  <th scope="row">1</th>
-                  <td>Mark</td>
-                  <td>Otto</td>
-                  <td>@mdo</td>
+                  <td>{{ paper_search.id }}</td>
+                  <td>{{ paper_search.submitter }}</td>
+                  <td>{{ paper_search.authors }}</td>
+                  <td>{{ paper_search.title }}</td>
+                  <td>{{ paper_search.comments }}</td>
+                  <td>{{ paper_search.journalref }}</td>
+                  <td>{{ paper_search.doi }}</td>
+                  <td>{{ paper_search.abstract }}</td>
+                  <td>{{ paper_search.categories }}</td>
+                  <td>{{ paper_search.versions }}</td>
                 </tr>
-                <tr>
-                  <th scope="row">2</th>
-                  <td>Jacob</td>
-                  <td>Thornton</td>
-                  <td>@fat</td>
-                </tr>
-                <tr>
-                  <th scope="row">3</th>
-                  <td>Larry</td>
-                  <td>the Bird</td>
-                  <td>@twitter</td>
-                </tr>
-                <tr>
-                  <th scope="row">1</th>
-                  <td>Mark</td>
-                  <td>Otto</td>
-                  <td>@mdo</td>
-                </tr>
-                <tr>
-                  <th scope="row">2</th>
-                  <td>Jacob</td>
-                  <td>Thornton</td>
-                  <td>@fat</td>
-                </tr>
-                <tr>
-                  <th scope="row">3</th>
-                  <td>Larry</td>
-                  <td>the Bird</td>
-                  <td>@twitter</td>
-                </tr>
-                <tr>
-                  <th scope="row">1</th>
-                  <td>Mark</td>
-                  <td>Otto</td>
-                  <td>@mdo</td>
-                </tr>
-                <tr>
-                  <th scope="row">2</th>
-                  <td>Jacob</td>
-                  <td>Thornton</td>
-                  <td>@fat</td>
-                </tr>
-                <tr>
-                  <th scope="row">3</th>
-                  <td>Larry</td>
-                  <td>the Bird</td>
-                  <td>@twitter</td>
-                </tr>
+                {%endfor%}
               </tbody>
             </table>
           </div>
@@ -164,31 +122,33 @@
               </caption>
               <thead>
                 <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">First</th>
-                  <th scope="col">Last</th>
-                  <th scope="col">Handle</th>
+                  <th scope="col">ID</th>
+                  <th scope="col">SUBMITTER</th>
+                  <th scope="col">AUTHORS</th>
+                  <th scope="col">TITLE</th>
+                  <th scope="col">COMMENTS</th>
+                  <th scope="col">JOURNAL</th>
+                  <th scope="col">DOI</th>
+                  <th scope="col">ABSTRACT</th>
+                  <th scope="col">CATEGORIES</th>
+                  <th scope="col">VERSIONS</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="table_postgresql">
+                {%for paper_search in data_papers_postgresql%}
                 <tr>
-                  <th scope="row">1</th>
-                  <td>Mark</td>
-                  <td>Otto</td>
-                  <td>@mdo</td>
+                  <td>{{ paper_search.id }}</td>
+                  <td>{{ paper_search.submitter }}</td>
+                  <td>{{ paper_search.authors }}</td>
+                  <td>{{ paper_search.title }}</td>
+                  <td>{{ paper_search.comments }}</td>
+                  <td>{{ paper_search.journalref }}</td>
+                  <td>{{ paper_search.doi }}</td>
+                  <td>{{ paper_search.abstract }}</td>
+                  <td>{{ paper_search.categories }}</td>
+                  <td>{{ paper_search.versions }}</td>
                 </tr>
-                <tr>
-                  <th scope="row">2</th>
-                  <td>Jacob</td>
-                  <td>Thornton</td>
-                  <td>@fat</td>
-                </tr>
-                <tr>
-                  <th scope="row">3</th>
-                  <td>Larry</td>
-                  <td>the Bird</td>
-                  <td>@twitter</td>
-                </tr>
+                {%endfor%}
               </tbody>
             </table>
           </div>
