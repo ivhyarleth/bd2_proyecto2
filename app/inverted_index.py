@@ -140,39 +140,42 @@ class InvertedIndex:
         #     serializer.dump(self.inverted_index,f,protocol = serializer.HIGHEST_PROTOCOL)
     
     
-  #modificar  
   def compare_query(self, query):
     query = self.clean_text(query)
     index_query = {}
     for word in query:
+        word=word.lower()
         if word not in stoplist:
-            word = stemmer.stem(word.lower())
-        if word not in index_query.keys():
-            index_query[word] = { "tf" : 0 }
-        index_query[word]['tf'] += 1
+            tokenq = stemmer.stem(word)
+        if tokenq not in index_query.keys():
+            index_query[tokenq] = { 'tf' : 0 }
+        index_query[tokenq]['tf'] += 1
     norma = 0
     
-    for word in index_query.keys():
-      if word in self.inverted_index.keys():
-        index_query[word]['tf_idf'] = (1+math.log10(index_query[word]['tf'])) * self.inverted_index[word]['idf']
-        norma += index_query[word]['tf_idf']**2
+    for tokenq in index_query.keys():
+      if tokenq in self.inverted_index.keys():
+        index_query[tokenq]['tf_idf'] = (1+math.log10(index_query[tokenq]['tf'])) * self.inverted_index[tokenq]['idf']
+        norma += index_query[tokenq]['tf_idf']**2
     norma = math.sqrt(norma)
     
-    for word in index_query.keys():
-      if 'tf_idf' in index_query[word].keys():
-      #if index_query[word]['tf_idf']:
-        index_query[word]['norma'] = index_query[word]['tf_idf']/norma if norma != 0 else 0
+    for tokenq in index_query.keys():
+      if 'tf_idf' in index_query[tokenq].keys():
+        index_query[tokenq]['norma'] = index_query[tokenq]['tf_idf']/norma if norma != 0 else 0
+        self.inverted_index['norma'] = self.inverted_index['tf_idf']/norma if norma != 0 else 0
     cosenos = []
     
-    for file in self.papers_files:
-      similarity = 0
-      papers = []
-      for word in index_query.keys():
-        if "norma" in index_query[word].keys() and file in self.inverted_index[word].keys():
-          papers_by_word = sorted(self.inverted_index[word][file]['papers'], key = lambda v: v['freq'], reverse=True)
-          papers.append({"word": word, "papers": papers_by_word})
-          similarity += index_query[word]['norma'] * self.inverted_index[word][file]['norma']
-      cosenos.append({"id": file, "coseno": similarity, "results": papers})
+    #for file in range(len(self.inverted_index[tokenq]['papers'])): #error
+    #print(file)
+    similarity = 0
+    papers = []
+    print(self.inverted_index[tokenq].keys())
+    print(index_query[tokenq].keys())
+    for tokenq in index_query.keys():
+      if 'norma' in index_query[tokenq].keys() and self.inverted_index[tokenq].keys():
+        papers_by_word = sorted(self.inverted_index[tokenq]['papers'], key = lambda v: v['freq'], reverse=True)
+        papers.append({"word": tokenq, "papers": papers_by_word})
+        similarity += index_query[tokenq]['norma'] * self.inverted_index['norma']
+      cosenos.append({"id": papers['id'], "coseno": similarity, "results": papers})
     cosenos = sorted(cosenos, key = lambda v: v['coseno'], reverse=True)
     
     with io.open('cosenos.json', 'w', encoding='utf8') as outfile:
@@ -182,3 +185,4 @@ class InvertedIndex:
         outfile.write(to_unicode(str_))
     return cosenos
     
+
