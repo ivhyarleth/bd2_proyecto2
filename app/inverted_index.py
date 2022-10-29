@@ -163,20 +163,22 @@ class InvertedIndex:
         index_query[tokenq]['norma'] = index_query[tokenq]['tf_idf']/norma if norma != 0 else 0
         self.inverted_index['norma'] = self.inverted_index['tf_idf']/norma if norma != 0 else 0
     cosenos = []
-    
-    #for file in range(len(self.inverted_index[tokenq]['papers'])): #error
+        
+    for paper in self.inverted_index[tokenq]['papers']: #error
     #print(file)
-    similarity = 0
-    papers = []
-    print(self.inverted_index[tokenq].keys())
-    print(index_query[tokenq].keys())
-    for tokenq in index_query.keys():
-      if 'norma' in index_query[tokenq].keys() and self.inverted_index[tokenq].keys():
-        papers_by_word = sorted(self.inverted_index[tokenq]['papers'], key = lambda v: v['freq'], reverse=True)
-        papers.append({"word": tokenq, "papers": papers_by_word})
-        similarity += index_query[tokenq]['norma'] * self.inverted_index['norma']
-      cosenos.append({"id": papers['id'], "coseno": similarity, "results": papers})
-    cosenos = sorted(cosenos, key = lambda v: v['coseno'], reverse=True)
+      similarity = 0
+      papers = []
+      #print(self.inverted_index[tokenq]['papers'].keys())
+      #print(index_query[tokenq].keys())
+      for tokenq in index_query.keys():
+        #print("holaaaaasassaasas")
+        if 'norma' in index_query[tokenq].keys():
+          #print("holaaaa")
+          papers_by_word = sorted(self.inverted_index[tokenq]['papers'], key = lambda v: v['freq'], reverse=True)
+          papers.append({"word": tokenq, "papers": papers_by_word})
+          similarity += index_query[tokenq]['norma'] * paper['norma']
+        cosenos.append({"paper": paper, "coseno": similarity})
+      cosenos = sorted(cosenos, key = lambda v: v['coseno'], reverse=True)
     
     with io.open('cosenos.json', 'w', encoding='utf8') as outfile:
         str_ = json.dumps(cosenos,
@@ -184,5 +186,6 @@ class InvertedIndex:
                   separators=(',', ': '), ensure_ascii=False)
         outfile.write(to_unicode(str_))
     return cosenos
+    
     
 
