@@ -22,9 +22,9 @@ EXT = ".json"
 
 nltk.download('stopwords')
 nltk.download('punkt')
-stoplist = stopwords.words("spanish")
+stoplist = stopwords.words("english")
 stoplist += ['?','aqui','.',',','»','«','â','ã','>','<','(',')','º','u']
-stemmer = SnowballStemmer('spanish')
+stemmer = SnowballStemmer('english')
 
 class InvertedIndex:
   inverted_index = { }
@@ -85,18 +85,21 @@ class InvertedIndex:
                 paperToSave[k] = v
             paper_list.append(paperToSave)
             count += 1
-            if (count == 100):
+            if (count == 11):
                 break
-    
+        #print(paper_list)
         for paper in paper_list:
             t = join(paper['id'], " ", paper['authors'], " ", paper['abstract'])
             t = self.clean_text(t.lower())
+            #print(t)
+            #print(paper["id"])
             for word in t:
                 if word not in stoplist:
                     token = stemmer.stem(word)
                 if token not in self.inverted_index.keys():
                     #df = un solo archivo
                     self.inverted_index[token] = {"df":0,"tf":0,'papers':[]} 
+                    #print(self.inverted_index[token]['papers'])
                 found = False
                 for x in self.inverted_index[token]['papers']:
                     if x['id'] == paper['id']:
@@ -107,17 +110,25 @@ class InvertedIndex:
                     self.inverted_index[token]['papers'].append({"id":paper['id'], "freq":1})
                     self.inverted_index[token]['df'] += 1
                 self.inverted_index[token]['tf'] += 1
-
+                #print(token," - ",self.inverted_index[token])
+        #print(len(paper_list))
+        #for val in self.inverted_index.keys():
+        #  print(self.inverted_index[val])
         for token in self.inverted_index.keys():
             self.inverted_index[token]['idf'] = math.log(len(paper_list)/self.inverted_index[token]["df"], 10)
             self.inverted_index[token]['score'] = 0
             for index in range(len(self.inverted_index[token]['papers'])):
+                #print(index,end=" - ")
                 tf = self.inverted_index[token]['papers'][index]['freq']
                 idf = self.inverted_index[token]["idf"]
                 tf_idf = (1 + math.log(tf)) * idf
                 self.inverted_index[token]['papers'][index]['tf_idf'] = tf_idf
                 self.inverted_index[token]['score'] += tf_idf
-        
+                #print(self.inverted_index[token]['score'],end=" - ")
+            #print()
+        #for val in self.inverted_index:
+          #print(val," - ",self.inverted_index[val])   
+        print(len(paper_list))     
         for doc in paper_list:
             norma = 0
             for token in self.inverted_index.keys():
@@ -127,7 +138,7 @@ class InvertedIndex:
             norma = math.sqrt(norma)
             for token in self.inverted_index.keys():
                 for paper in range(len(self.inverted_index[token]['papers'])):
-                    if doc['id'] == self.inverted_index[token]['papers'][paper]:
+                    if doc['id'] == self.inverted_index[token]['papers'][paper]['id']:
                         self.inverted_index[token]['papers'][paper]['norma'] = self.inverted_index[token]['papers'][paper]["tf_idf"]/norma
     
         with io.open('indice_invertido.json', 'w', encoding='utf8') as outfile:
@@ -161,9 +172,60 @@ class InvertedIndex:
     for tokenq in index_query.keys():
       if 'tf_idf' in index_query[tokenq].keys():
         index_query[tokenq]['norma'] = index_query[tokenq]['tf_idf']/norma if norma != 0 else 0
-        self.inverted_index['norma'] = self.inverted_index['tf_idf']/norma if norma != 0 else 0
+        #self.inverted_index['norma'] = self.inverted_index['tf_idf']/norma if norma != 0 else 0
     cosenos = []
-        
+    #print(index_query)
+    #print(self.inverted_index["data"])
+    
+    #print("esto es tokenq: ", tokenq)
+    
+    
+    similarity=0
+    papers=[]
+    matrix={}
+    for tokenq in index_query.keys():
+      print(tokenq)
+      #print(self.inverted_index[tokenq])
+      for val in self.inverted_index[tokenq]['papers']:
+        if val["id"] not in matrix:
+          #matrix[val["id"]]=[]
+          matrix[val["id"]]=[[tokenq,val['norma']]]
+        else:
+          matrix[val["id"]].append([tokenq,val['norma']])
+      
+    for papers in matrix:
+      similarity=0
+      for words in matrix[papers]:
+        similarity+=index_query[words[0]]['norma']*words[1]
+      cosenos.append({"paper":papers,"similarity":similarity})
+    cosenos = sorted(cosenos, key = lambda v: v['similarity'], reverse=True)
+  
+
+    '''
+      if "norma" in index_query[tokenq].keys():
+        papers_by_word = sorted(self.inverted_index[tokenq]['papers'], key = lambda v: v['freq'], reverse=True)
+        papers.append({"word": tokenq, "papers": papers_by_word})
+        similarity += index_query[tokenq]['norma']
+      cosenos.append({"papers":self.inverted_index[tokenq]['papers'],"coseno": similarity})
+    cosenos = sorted(cosenos, key = lambda v: v['coseno'], reverse=True)
+    '''
+    #print(matrix)
+
+    for val in matrix:
+      print(val,"-",matrix[val])
+
+    print(index_query)
+    with io.open('cosenos.json', 'w', encoding='utf8') as outfile:
+      str_ = json.dumps(cosenos,
+                indent=4, sort_keys=True,
+                separators=(',', ': '), ensure_ascii=False)
+      outfile.write(to_unicode(str_))
+      
+      #print(index_query[tokenq].keys()," - ",index_query[tokenq])
+      #print(self.inverted_index[tokenq].keys())
+      #print(self.inverted_index[tokenq])
+
+    '''      
     for paper in self.inverted_index[tokenq]['papers']: #error
     #print(file)
       similarity = 0
@@ -180,11 +242,8 @@ class InvertedIndex:
         cosenos.append({"paper": paper, "coseno": similarity})
       cosenos = sorted(cosenos, key = lambda v: v['coseno'], reverse=True)
     
-    with io.open('cosenos.json', 'w', encoding='utf8') as outfile:
-        str_ = json.dumps(cosenos,
-                  indent=4, sort_keys=True,
-                  separators=(',', ': '), ensure_ascii=False)
-        outfile.write(to_unicode(str_))
+    
+    '''
     return cosenos
     
     
