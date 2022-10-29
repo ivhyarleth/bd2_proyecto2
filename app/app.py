@@ -26,6 +26,7 @@ def index():
 
 if __name__ == '__main__':
     inverted_index.create_inverted_index()
+    inverted_index.compare_query("bound in berkeley back background")
     
     app.config.from_object(config['development'])
     
