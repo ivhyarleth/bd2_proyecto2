@@ -50,7 +50,7 @@
             success: function(response) {
               response["data"].forEach((x,i) => {
                 console.log(x);
-                var row = "<tr><td>"+x["info"]["id"]+"</td><td>"+x["info"]["submitter"]+"</td><td>"+x["info"]["authors"]+"</td><td>"+x["info"]["title"]+"</td><td>"+x["info"]["comments"]+"</td><td>"+x["info"]["journal-ref"]+"</td><td>"+x["info"]["doi"]+"</td><td>"+x["info"]["abstract"]+"</td><td>"+x["info"]["categories"]+"</td><td>"+x["info"]["versions"].length+"</td></tr>"
+                var row = "<tr><td>"+x["info"]["id"]+"</td><td>"+x["info"]["submitter"]+"</td><td>"+x["info"]["authors"]+"</td><td>"+x["info"]["title"]+"</td><td>"+x["info"]["comments"].substring(0,40)+"</td><td>"+x["info"]["journal-ref"]+"</td><td>"+x["info"]["doi"]+"</td><td>"+x["info"]["abstract"].substring(0,40) + " ... "+"</td><td>"+x["info"]["categories"]+"</td><td>"+x["info"]["versions"].length+"</td></tr>"
                 $("#table_index").append(row);
               });
               $("#tiempo-python").text("Tiempo " + response["tiempo"] + " ms.")

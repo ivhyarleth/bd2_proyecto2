@@ -89,7 +89,7 @@ class InvertedIndex:
               paper_list.append(paperToSave)
               count += 1
               if (count == 100):
-                  break
+                  break     
           # print(paper_list)
           for paper in paper_list:
               t = join(paper['id'], " ", paper['authors'],
