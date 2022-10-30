@@ -33,6 +33,36 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css"
     />
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function() {
+        $("#post-form").click(function(e) {
+          $("#table_index").empty();
+          var consulta = $('#input_consulta').val();
+          var topK = $("#input_dos").val();
+          $.ajax({
+            url: 'http://127.0.0.1:5000/kPrimeros',
+            type: 'POST',
+            data: {
+              'consulta': consulta,
+              'topK': topK
+            },
+            success: function(response) {
+              response["data"].forEach((x,i) => {
+                console.log(x);
+                var row = "<tr><td>"+x["info"]["id"]+"</td><td>"+x["info"]["submitter"]+"</td><td>"+x["info"]["authors"]+"</td><td>"+x["info"]["title"]+"</td><td>"+x["info"]["comments"]+"</td><td>"+x["info"]["journal-ref"]+"</td><td>"+x["info"]["doi"]+"</td><td>"+x["info"]["abstract"]+"</td><td>"+x["info"]["categories"]+"</td><td>"+x["info"]["versions"].length+"</td></tr>"
+                $("#table_index").append(row);
+              });
+              $("#tiempo-python").text("Tiempo " + response["tiempo"] + " ms.")
+            },
+            error: function(error) {
+              console.log(error);
+            }
+          });
+          e.preventDefault();
+        });
+      });
+    </script>
   </head>
   <body>
     <div class="container">
@@ -63,12 +93,13 @@
       <div class="row">
         <form class="d-flex mb-3" role="search">
           <input
+            id="input_dos"
             class="form-control me-2"
             type="search"
             placeholder="Buscar top k"
             aria-label="Search"
           />
-          <button class="btn btn-info" type="submit">
+          <button id ="post-form" class="btn btn-info" type="submit">
             <i class="bi bi-search icono-search"></i>
           </button>
         </form>
@@ -156,7 +187,7 @@
       </div>
       <div class="row mb-3">
         <div class="col-6">
-          <span> Tiempo: 30ms</span>
+          <span id="tiempo-python"></span>
         </div>
         <div class="col-6">
           <span> Tiempo: 30ms</span>

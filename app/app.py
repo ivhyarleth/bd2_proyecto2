@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, redirect
+from crypt import methods
+from flask import Flask, render_template, request, redirect, jsonify
 from config import config
 import requests
 import json
 from inverted_index import InvertedIndex
 
-#rutas
-from src.routes import papers_route 
+# rutas
+from src.routes import papers_route
 
 app = Flask(__name__)
 
@@ -16,19 +17,29 @@ inverted_index = InvertedIndex("arxiv-metadata-oai-snapshot.json")
 def index():
     return render_template('index.html')
 
-#@app.route('/<id>', methods['GET'])
-#def get_id(_id):
+# @app.route('/<id>', methods['GET'])
+# def get_id(_id):
 #    id = _id
-    
+
 #    return render_template('index.html',id)
+
+
+@app.route('/kPrimeros', methods=["POST"])
+def kPrimeros():
+    consulta = request.form["consulta"]
+    k = request.form["topK"]
+    cosenos = inverted_index.compare_query(consulta)
+    print("cosenos", cosenos[1])
+    return jsonify({"data": cosenos[0][:int(k)], "tiempo": cosenos[1]})
 
 
 
 if __name__ == '__main__':
     inverted_index.create_inverted_index()
-    inverted_index.compare_query("solutions to a family of problems concerning tree decompositions important role in the theory of partial cubes In particular, the isometric and lattice dimensions of finite")
-    
+    inverted_index.compare_query(
+        "solutions to a family of problems concerning tree decompositions important role in the theory of partial cubes In particular, the isometric and lattice dimensions of finite")
+
     app.config.from_object(config['development'])
-    
+
     app.register_blueprint(papers_route.main, url_prefix='/api/papers')
     app.run()
