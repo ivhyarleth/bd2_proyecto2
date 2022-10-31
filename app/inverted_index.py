@@ -156,9 +156,9 @@ class InvertedIndex:
     def save_block_dict(self, block_dict, indexfile_id):
         indexn_filepath = self.get_indexfile_path(indexfile_id)
         with io.open(indexn_filepath, 'w', encoding='utf8') as outfile:
-            for word in block_dict:
+            for word in sorted(block_dict.keys()):
                 jsondata = json.dumps({word:block_dict[word]},
-                                sort_keys=True, ensure_ascii=False) + "\n"
+                                ensure_ascii=False) + "\n"
                 outfile.write(jsondata)
 
     ###################################################
@@ -168,7 +168,6 @@ class InvertedIndex:
         tmpn_filepath = self.get_tmpfile_path(tempfile_id)
         with io.open(tmpn_filepath, 'a', encoding='utf8') as outfile:
             jsondata = json.dumps(word_dict,
-                                  sort_keys=True,
                                   ensure_ascii=False) + "\n"
             outfile.write(jsondata)
 
@@ -179,7 +178,6 @@ class InvertedIndex:
         tmpn_filepath = self.get_tmpfile_path(0)
         with io.open(tmpn_filepath, 'a', encoding='utf8') as outfile:
             jsondata = json.dumps(word_dict,
-                                  sort_keys=True,
                                   ensure_ascii=False) + "\n"
             outfile.write(jsondata)
 
@@ -354,7 +352,7 @@ class InvertedIndex:
             # Norm
             norm = math.sqrt(norm)
             # Total Block
-            index_word_block = {word:{"papers":word_block[word],"norm":norm}}
+            index_word_block = {word:{"papers":word_block[word],"norm":norm,"IDF":IDF}}
             # Write to temp
             self.save_calc_dict(index_word_block)
             try:
