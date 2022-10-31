@@ -4,3 +4,7 @@ activate
 
 # Python
 *__pycache__/
+
+# App specific
+app/*.json
+app/data/
