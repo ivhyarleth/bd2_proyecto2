@@ -71,6 +71,16 @@ class InvertedIndex:
     def read_jsonblock(self,jsonpaper):
         return json.loads(jsonpaper)
 
+    def find_entry(self, word):
+        #TODO: OPTIMIZE WITH EXTRA FILE WITH POINTERS TO START OF JSONS AND LEN
+        fileread = self.read_indexfile(0)
+        for jsondata in fileread:
+            entry = self.read_jsonblock(jsondata)
+            entryword = list(entry.keys())[0]
+            if (entryword == word):
+                return entry[word]
+        return None
+
     ###################################################
     #              MANAGEFILES
     ###################################################
@@ -352,7 +362,7 @@ class InvertedIndex:
             # Norm
             norm = math.sqrt(norm)
             # Total Block
-            index_word_block = {word:{"papers":word_block[word],"norm":norm,"IDF":IDF}}
+            index_word_block = {word:{"papers":word_block[word],"norm":norm,"IDF":IDF}} # NOTE: norm inecesario?
             # Write to temp
             self.save_calc_dict(index_word_block)
             try:
@@ -363,6 +373,61 @@ class InvertedIndex:
         # OVERWRITE INDEX
         self.rename_tmpfile(0)
 
+
+
+    def compare_query(self, query):
+        start_time = time.time()
+        
+        query = self.clean_text(query)
+        
+        # Init query dict
+        index_query = {}
+        
+        # CONTEO DE TOKENS
+        for word in query:
+            word = word.lower()
+            if word not in stoplist:
+                tokenq = stemmer.stem(word)
+                if tokenq not in index_query:
+                    index_query[tokenq] = 1
+                index_query[tokenq] += 1
+        
+        # CALCULO DE TF.IDF de la QUERY y PROD COSENO
+        norma_query = 0
+        papers_data = {}
+        for tokenq in index_query.keys():
+            entry = self.find_entry(tokenq)
+            if entry:
+                TF = 1+math.log(index_query[tokenq])
+                IDF = entry["IDF"]
+                TFIDF = TF*IDF
+                norma_query += (TFIDF) ** 2
+                for paper_id in entry["papers"]:
+                    cosine_pq = TFIDF * entry["papers"][paper_id]
+                    if paper_id in papers_data:
+                        papers_data[paper_id]["cos"] += cosine_pq
+                        papers_data[paper_id]["norm"] += entry["papers"][paper_id]**2
+                    else:
+                        papers_data[paper_id] = {}
+                        papers_data[paper_id]["cos"] = cosine_pq
+                        papers_data[paper_id]["norm"] = entry["papers"][paper_id]**2
+        norma_query = math.sqrt(norma_query)
+
+        # Normalizar
+        similarity = []
+        for paper_id in papers_data:
+            papers_data[paper_id]["norm"] = math.sqrt(papers_data[paper_id]["norm"])
+            papers_data[paper_id]["cos"] = papers_data[paper_id]["cos"] / (norma_query * papers_data[paper_id]["norm"])
+            similarity.append( {"paper":paper_id, "similarity":papers_data[paper_id]["cos"]} )
+
+        print(similarity)
+        with io.open('cosenos.json', 'w', encoding='utf8') as outfile:
+            str_ = json.dumps(similarity,
+                                indent=4, sort_keys=True,
+                                separators=(',', ': '), ensure_ascii=False)
+            outfile.write(str_)
+
+        return [sorted(similarity, key=lambda v: v['similarity'], reverse=True), round((time.time()-start_time)*1000, 4)]
 #'''
 
 
