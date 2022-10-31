@@ -1,0 +1,6 @@
+# venv
+proyenv
+activate
+
+# Python
+*__pycache__/
