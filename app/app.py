@@ -1,4 +1,3 @@
-from crypt import methods
 from flask import Flask, render_template, request, redirect, jsonify
 from config import config
 import requests
@@ -36,10 +35,9 @@ def kPrimeros():
 
 if __name__ == '__main__':
     inverted_index.create_inverted_index()
-    inverted_index.compare_query(
-        "solutions to a family of problems concerning tree decompositions important role in the theory of partial cubes In particular, the isometric and lattice dimensions of finite")
+    #inverted_index.compare_query("solutions")
 
-    app.config.from_object(config['development'])
+    #app.config.from_object(config['development'])
 
-    app.register_blueprint(papers_route.main, url_prefix='/api/papers')
+    #app.register_blueprint(papers_route.main, url_prefix='/api/papers')
     app.run()
