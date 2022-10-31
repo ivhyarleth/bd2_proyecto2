@@ -3,7 +3,7 @@ proyenv
 activate
 
 # Python
-*__pycache__/
+#*__pycache__/
 
 # App specific
 app/*.json
