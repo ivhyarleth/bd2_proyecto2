@@ -14,7 +14,7 @@ import io
 import time
 from itertools import islice
 
-
+import time
     
 ROOT = "./"
 EXT = ".json"
@@ -26,6 +26,353 @@ stoplist = stopwords.words("english")
 stoplist += ['?','aqui','.',',','»','«','â','ã','>','<','(',')','º','u']
 stemmer = SnowballStemmer('english')
 
+
+### FOR TESTING set positive
+NUMBER_OF_ENTRIES = 1500 #10000
+
+
+#'''
+class InvertedIndex:
+    ROOT = "./"
+    DATAFOLDER = "./data"
+
+    """
+    Class Initialization
+    """    
+    def __init__(self, data_filename):
+        self.data_filename = data_filename
+        self.index_filename = "indice_invertido"
+        self.index_number = 0
+        self.index_extension = ".json"
+        self.tmp_filename = "tmpfile"
+        self.max_file_size = 4000000 # 4 MB
+                             
+    
+    ###################################################
+    #              PATH FUNCTIONS
+    ###################################################
+    def get_indexfile_path(self, number):
+        return self.index_filename+str(number)+self.index_extension
+
+    def get_tmpfile_path(self, number):
+        return self.tmp_filename+str(number)+self.index_extension
+
+    def get_datafile_path(self):
+        return os.path.join(InvertedIndex.DATAFOLDER, self.data_filename)
+
+    ###################################################
+    #              READ INDEXFILE FUNCTIONS
+    ###################################################
+    def read_indexfile(self, n):
+        with open(self.get_indexfile_path(n), 'r') as f:
+            for line in f:
+                yield line
+
+    def read_jsonblock(self,jsonpaper):
+        return json.loads(jsonpaper)
+
+    ###################################################
+    #              MANAGEFILES
+    ###################################################
+    def remove_indexfile(self, n):
+        os.remove(self.get_indexfile_path(n))
+
+    def rename_indexfile(self, a, b):
+        os.rename(self.get_indexfile_path(a), self.get_indexfile_path(b))
+
+    def rename_tmpfile(self, n):
+        os.rename(self.get_tmpfile_path(n), self.get_indexfile_path(n))
+
+    ###################################################
+    #              READ DATAFILE FUNCTIONS
+    ###################################################
+    def read_datafile(self):
+        with open(self.get_datafile_path(), 'r') as f:
+            for line in f:
+                yield line
+
+    def read_jsonpaper(self,jsonpaper):
+        return json.loads(jsonpaper)
+
+    def extract_field_paper(self, field, paper):
+        if field in paper:
+            return paper[field]
+        else:
+            return " "
+
+    def extract_text_paper(self, paper):
+        return " ".join( (self.extract_field_paper('id',paper),
+                 self.extract_field_paper('authors',paper),
+                 self.extract_field_paper('abstract',paper),
+                 self.extract_field_paper('categories',paper),
+                 self.extract_field_paper('title',paper) ) )
+
+    def extract_id_paper(self, paper):
+        return paper["id"]
+
+    ###################################################
+    #                CLEAN TEXT
+    ###################################################
+
+    def remove_punctuation(self, text):   
+        return re.sub('[%s]' % re.escape(string.punctuation), ' ', text)
+
+    def remove_url(self, text):
+        t = text.find('https://t.co/')
+        if t != -1:
+            text = re.sub('https://t.co/\w{10}', '', text)
+        return text
+
+    def remove_special_character(self, text):
+        characters = ('\"','\'','º','&','¿','?','¡','!',' “','…','👏',
+                                    '-','—','‘','•','›','‼','€','£','↑','→','↓','↔',
+                                    '↘','↪','√','∧','⊃','⌒','⌛','⏬','⏯','⏰','⏹')
+        for char in characters:
+            text = text.replace(char, "")
+        return text
+
+    def clean_text(self, text):
+        #TODO
+        text = self.remove_special_character(text)
+        text = self.remove_punctuation(text)
+        text = self.remove_url(text)
+        text = nltk.word_tokenize(text)
+        return text
+
+
+    ###################################################
+    #                MEMORY USAGE
+    ###################################################
+    def memory_usage_block_dict(self, block_dict):
+        memory_usage = sys.getsizeof(block_dict)
+        memory_usage += sum(map(sys.getsizeof, block_dict.values())) + sum(map(sys.getsizeof, block_dict.keys()))
+        for word in block_dict:
+            memory_usage += sum(map(sys.getsizeof, block_dict[word].values())) + sum(map(sys.getsizeof, block_dict[word].keys()))
+        return memory_usage
+    
+    ###################################################
+    #                INDEX BLOCK
+    ###################################################
+    def save_block_dict(self, block_dict, indexfile_id):
+        indexn_filepath = self.get_indexfile_path(indexfile_id)
+        with io.open(indexn_filepath, 'w', encoding='utf8') as outfile:
+            for word in block_dict:
+                jsondata = json.dumps({word:block_dict[word]},
+                                sort_keys=True, ensure_ascii=False) + "\n"
+                outfile.write(jsondata)
+
+    ###################################################
+    #              WRITE MERGE TMP BLOCK
+    ###################################################
+    def save_merge_dict(self, tempfile_id, word_dict):
+        tmpn_filepath = self.get_tmpfile_path(tempfile_id)
+        with io.open(tmpn_filepath, 'a', encoding='utf8') as outfile:
+            jsondata = json.dumps(word_dict,
+                                  sort_keys=True,
+                                  ensure_ascii=False) + "\n"
+            outfile.write(jsondata)
+
+    ###################################################
+    #              WRITE CALC TMP BLOCK
+    ###################################################
+    def save_calc_dict(self, word_dict):
+        tmpn_filepath = self.get_tmpfile_path(0)
+        with io.open(tmpn_filepath, 'a', encoding='utf8') as outfile:
+            jsondata = json.dumps(word_dict,
+                                  sort_keys=True,
+                                  ensure_ascii=False) + "\n"
+            outfile.write(jsondata)
+
+    ###################################################
+    #                MAIN FUNCTIONS
+    ###################################################
+
+    def create_inverted_index(self):
+        if os.path.isfile( self.get_indexfile_path(0) ):
+            # If index already exists. Skip
+            return
+        
+        datafile = self.read_datafile()
+        
+        # SPIMI INVERT
+        # Init block dict
+        block_dict = {}
+        indexfile_id = 0
+        paper_count = 0
+        for jsonpaper in datafile:
+            saved = False
+            # Parse paper
+            paper = self.read_jsonpaper(jsonpaper)
+            # Extract paper id
+            paper_id = self.extract_id_paper(paper)
+            # Extract text from paper
+            text = self.extract_text_paper(paper)
+            text_tokenized = self.clean_text(text)
+            # Tokenize text
+            for word in text_tokenized:
+                if word not in stoplist:
+                    stem_token = stemmer.stem(word)
+                    # Insert into posting list
+                    if stem_token in block_dict:
+                        # Add 1 to count
+                        if paper_id in block_dict[stem_token]:
+                            block_dict[stem_token][paper_id] += 1
+                        else:
+                            block_dict[stem_token][paper_id] = 1
+                    else:
+                        block_dict[stem_token] = {}
+                        block_dict[stem_token][paper_id] = 1
+            # Check if filesize exceeded
+            #print("MEMORY USAGE: {}".format(self.memory_usage_block_dict(block_dict)))
+            paper_count += 1
+            #############################################################
+            #                       FOR TESTING
+            #############################################################
+            if (paper_count%500) == 0:
+                print("PAPER COUNT:", paper_count)
+            if paper_count == NUMBER_OF_ENTRIES: 
+                break
+            #############################################################
+            if self.memory_usage_block_dict(block_dict) > self.max_file_size:
+                print("MEMORY USAGE EXCEEDED: count {}".format(paper_count))
+                # Save block dict
+                self.save_block_dict(block_dict, indexfile_id)
+                block_dict = {}
+                indexfile_id += 1
+                saved = True
+        # If last block not saved, save
+        if not saved:
+            self.save_block_dict(block_dict, indexfile_id)
+            indexfile_id += 1
+        number_indexfiles = indexfile_id-1
+
+        # SPIMI MERGE
+        merge_step = 2 #merge_total_levels = math.ceil( (number_indexfiles+1) **(1/2))
+
+        print("ORIGINAL INDEX FILE NUMBER:", number_indexfiles)
+        while (number_indexfiles): # While more than 1 file
+            tmpfile_id = 0
+            for i in range(0,number_indexfiles+1, merge_step):
+                print("FILE POINTER:",i)
+                if (number_indexfiles >= i+1):
+                    block_a = self.read_indexfile(i)
+                    block_b = self.read_indexfile(i+1)
+                    tmpfile_id = int(i/2) 
+                    valid_a = True
+                    valid_b = True
+                    # Iterate both
+                    word_block_a = self.read_jsonblock(next(block_a))
+                    word_block_b = self.read_jsonblock(next(block_b))
+                    while (True):
+                        word_a = list(word_block_a.keys())[0]
+                        word_b = list(word_block_b.keys())[0]
+                        #print(word_block_a)
+                        if word_a == word_b:
+                            # If word is the same, merge
+                            word_block_next = word_block_a
+                            for paper_id in word_block_b[word_a]:
+                                t =  word_block_b[word_a][paper_id]
+                                if paper_id in word_block_next[word_a]:
+                                    word_block_next[word_a][paper_id] += t
+                                else:
+                                    word_block_next[word_a][paper_id] =  t
+                            self.save_merge_dict(tmpfile_id, word_block_next)
+                            # Advance to next
+                            try:
+                                word_block_a = self.read_jsonblock(next(block_a))
+                            except:
+                                valid_a = False
+                                break
+                            try:
+                                word_block_b = self.read_jsonblock(next(block_b))
+                            except:
+                                valid_b = False
+                                break
+                        else:
+                            # If different, add in order
+                            if word_a < word_b:
+                                word_block_next = word_block_a
+                                self.save_merge_dict(tmpfile_id, word_block_next)
+                                # Advance to next
+                                try:
+                                    word_block_a = self.read_jsonblock(next(block_a))
+                                except:
+                                    valid_a = False
+                                    break
+                            else:
+                                word_block_next = word_block_b
+                                self.save_merge_dict(tmpfile_id, word_block_next)
+                                # Advance to next
+                                try:
+                                    word_block_b = self.read_jsonblock(next(block_b))
+                                except:
+                                    valid_b = False
+                                    break
+                    # Iterate remanining
+                    while (valid_a):
+                        word_block_next = word_block_a
+                        self.save_merge_dict(tmpfile_id, word_block_next)
+                        try:
+                            word_block_a = read_jsonblock(next(block_a))
+                        except:
+                            valid_a = False
+                            break
+                    while (valid_b):
+                        word_block_next = word_block_b
+                        self.save_merge_dict(tmpfile_id, word_block_next)
+                        try:
+                            word_block_b = read_jsonblock(next(block_b))
+                        except:
+                            valid_b = False
+                            break
+
+                    # Overwrite old files
+                    self.remove_indexfile(i)
+                    self.remove_indexfile(i+1)
+                    self.rename_tmpfile(tmpfile_id)
+                else:
+                    tmpfile_id+=1
+                    self.rename_indexfile(i, tmpfile_id)
+
+            # Update number of files
+            number_indexfiles = tmpfile_id
+            print("NUMBER OF INDEX FILES:", number_indexfiles)
+        
+        # ADD TF.IDF TO INDEX
+        base_index = self.read_indexfile(i)
+        word_block = self.read_jsonblock(next(base_index))
+        while (True):
+            word = list(word_block.keys())[0]
+            # Calculate IDF
+            IDF = math.log(paper_count / len(word_block[word]))
+            # Calculate TF*IDF
+            norm = 0
+            for id_paper in word_block[word]:
+                TF = 1+math.log(word_block[word][id_paper])
+                word_block[word][id_paper] = TF*IDF
+                norm += (TF*IDF) ** 2
+            # Norm
+            norm = math.sqrt(norm)
+            # Total Block
+            index_word_block = {word:{"papers":word_block[word],"norm":norm}}
+            # Write to temp
+            self.save_calc_dict(index_word_block)
+            try:
+                word_block = self.read_jsonblock(next(base_index))
+            except:
+                break
+
+        # OVERWRITE INDEX
+        self.rename_tmpfile(0)
+
+#'''
+
+
+
+
+
+
+"""
 class InvertedIndex:
   inverted_index = { }
   papers_files = ""
@@ -43,7 +390,9 @@ class InvertedIndex:
     for base, dirs, files in os.walk(ROOT):
       for file in files:
         f = join(base,file)
+        print("F:",f)
         if self.dataname in f:
+          print("SELECTED:",f)
           self.papers_files=f
   
   def remove_punctuation(self, text):   
@@ -83,6 +432,7 @@ class InvertedIndex:
       else:
           self.read_files()
           json_file = self.get_metadata()
+          print("JSON FILE:{}".format(json_file))
           paper_list = []
           count = 0
           for paper in json_file:
@@ -268,3 +618,4 @@ class InvertedIndex:
   
   '''
       return [sorted(self.get_data_index(cosenos), key=lambda v: v['val'], reverse=True), round((time.time()-start_time)*1000, 4)]
+"""
