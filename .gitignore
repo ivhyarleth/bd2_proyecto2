@@ -7,4 +7,5 @@ activate
 
 # App specific
 app/*.json
+app/*.bin
 app/data/

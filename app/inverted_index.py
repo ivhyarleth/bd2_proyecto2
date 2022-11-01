@@ -14,6 +14,7 @@ import io
 import time
 from itertools import islice
 
+import struct
 import time
     
 ROOT = "./"
@@ -40,13 +41,25 @@ class InvertedIndex:
     Class Initialization
     """    
     def __init__(self, data_filename):
+        # Origin File
         self.data_filename = data_filename
+        # Binary Files
+        self.database_data_filename = "database_data"
+        self.database_head_filename = "database_head"
+        self.tmp_head_filename = "tmpfile_head"
+        self.database_extension = ".bin"
+        # Index Files
         self.index_filename = "indice_invertido"
-        self.index_number = 0
         self.index_extension = ".json"
+        # Temporary Files
         self.tmp_filename = "tmpfile"
-        self.max_file_size = 4000000 # 4 MB
-                             
+        # Properties/Config
+        self.max_memory_usage = 4000000 # 4 MB
+        self.HEADER_STRUCT = '32sIId'
+        # Calculate header struct size in bytes
+        entry = ("sample".ljust(32).encode('ascii'),1,1,0.0)
+        self.HEADER_LEN = len(struct.pack(self.HEADER_STRUCT, *entry))
+
     
     ###################################################
     #              PATH FUNCTIONS
@@ -57,8 +70,62 @@ class InvertedIndex:
     def get_tmpfile_path(self, number):
         return self.tmp_filename+str(number)+self.index_extension
 
+    def get_database_datafile_path(self):
+        return self.database_data_filename+self.database_extension
+
+    def get_database_headfile_path(self, number):
+        return self.database_head_filename+str(number)+self.database_extension
+
+    def get_database_tmpheadfile_path(self, number):
+        return self.tmp_head_filename+str(number)+self.database_extension
+
     def get_datafile_path(self):
         return os.path.join(InvertedIndex.DATAFOLDER, self.data_filename)
+    
+    ###################################################
+    #              DATABASE FUNCTIONS
+    ###################################################
+    def save_paper_database(self, paper_entry):
+        with io.open(self.get_database_datafile_path(), 'a', encoding='utf8') as outfile:
+            data_pos = outfile.tell()
+            jsondata = json.dumps(paper_entry,
+                                ensure_ascii=False) + "\n"
+            data_len = len(jsondata)
+            outfile.write(jsondata)
+            print(data_pos, data_len)
+            return data_pos, data_len
+    
+    def save_header_database(self, block_header, headerfile_id):
+        with io.open(self.get_database_headfile_path(headerfile_id), 'wb') as outfile:
+            block_header = sorted(block_header)
+            for entry in block_header:
+                data = struct.pack(self.HEADER_STRUCT, *entry)
+                outfile.write(data)
+
+    def read_headerfile(self, n):
+        with open(self.get_database_headfile_path(n), 'rb') as f:
+            chunk = f.read(self.HEADER_LEN)
+            while chunk:
+                data = struct.unpack(self.HEADER_STRUCT, chunk)
+                yield data
+                chunk = f.read(self.HEADER_LEN)
+
+    def save_merge_header(self, tempfile_id, entry):
+        tmpn_filepathn = self.get_database_tmpheadfile_path(tempfile_id)
+        with io.open(tmpn_filepathn, 'ab') as outfile:
+            data = struct.pack(self.HEADER_STRUCT, *entry)
+            outfile.write(data)
+
+
+
+
+
+
+
+
+
+
+
 
     ###################################################
     #              READ INDEXFILE FUNCTIONS
@@ -84,6 +151,15 @@ class InvertedIndex:
     ###################################################
     #              MANAGEFILES
     ###################################################
+    def remove_headerfile(self, n):
+        os.remove(self.get_database_headfile_path(n))
+
+    def rename_headerfile(self, a, b):
+        os.rename(self.get_database_headfile_path(a), self.get_database_headfile_path(b))
+
+    def rename_headertmpfile(self, n):
+        os.rename(self.get_database_tmpheadfile_path(n), self.get_database_headfile_path(n))
+
     def remove_indexfile(self, n):
         os.remove(self.get_indexfile_path(n))
 
@@ -118,7 +194,7 @@ class InvertedIndex:
                  self.extract_field_paper('title',paper) ) )
 
     def extract_id_paper(self, paper):
-        return paper["id"]
+        return paper["id"].ljust(32) # STRING OF SIZE 32
 
     ###################################################
     #                CLEAN TEXT
@@ -160,6 +236,14 @@ class InvertedIndex:
             memory_usage += sum(map(sys.getsizeof, block_dict[word].values())) + sum(map(sys.getsizeof, block_dict[word].keys()))
         return memory_usage
     
+    def memory_usage_block_list_header(self, block_list_header):
+        memory_usage = sys.getsizeof(block_list_header)
+        for entry in block_list_header:
+            memory_usage += sys.getsizeof(entry)
+            for element in entry:
+                memory_usage += sys.getsizeof(element)
+        return memory_usage
+
     ###################################################
     #                INDEX BLOCK
     ###################################################
@@ -196,12 +280,116 @@ class InvertedIndex:
     ###################################################
 
     def create_inverted_index(self):
+        
         if os.path.isfile( self.get_indexfile_path(0) ):
             # If index already exists. Skip
             return
+
+
+        ## ------------------------- BUILD DATABASE ------------------------
+        # Load JSON data file to database
+        datastream = self.read_datafile()
+        paper_count = 0
+        headerfile_id = 0
+        block_header = []
+        for jsonpaper in datastream:
+            saved = False
+            paper = self.read_jsonpaper(jsonpaper)
+            paper_id = self.extract_id_paper(paper)
+            paper_data_entry = {
+                'authors':self.extract_field_paper('authors',paper),
+                'abstract':self.extract_field_paper('abstract',paper),
+                'categories':self.extract_field_paper('categories',paper),
+                'title':self.extract_field_paper('title',paper)
+            }
+            data_pos, data_len = self.save_paper_database(paper_data_entry)
+            paper_head_entry = (paper_id.encode('ascii'), data_pos, data_len, 0.0)
+            block_header.append(paper_head_entry)
+
+            if self.memory_usage_block_list_header(block_header) > 5000:#self.max_memory_usage:
+                print("MEMORY USAGE EXCEEDED: count {}".format(paper_count))
+                # Save block list
+                self.save_header_database(block_header, headerfile_id)
+                block_header = []
+                headerfile_id += 1
+                saved = True
+            
+            ## DEBUG
+            if (paper_count==100):
+                break
+            paper_count += 1
+
+        if not saved:
+            self.save_header_database(block_header, headerfile_id)
+            headerfile_id += 1
         
+        # Merge Headers in sorted form
+        number_headerfiles = headerfile_id-1
+        merge_step = 2
+        while (number_headerfiles): # While more than 1 header
+            time.sleep(5)
+            tmpfile_id = 0
+            for i in range(0,number_headerfiles+1, merge_step):
+                if (number_headerfiles >= i+1):
+                    print("HEADER FILES MERGED:",i," <> ",i+1)
+                    block_a = self.read_headerfile(i)
+                    block_b = self.read_headerfile(i+1)
+                    valid_a = True
+                    valid_b = True
+                    tmpfile_id = int(i/2) 
+                    entry_a = next(block_a)
+                    entry_b = next(block_b)
+                    # Select in order
+                    while True:
+                        if entry_a[0] < entry_b[0]:
+                            self.save_merge_header(tmpfile_id, entry_a)
+                            try:
+                                entry_a = next(block_a)
+                            except:
+                                valid_a = False
+                                break
+                        else:
+                            self.save_merge_header(tmpfile_id, entry_b)
+                            try:
+                                entry_b = next(block_b)
+                            except:
+                                valid_b = False
+                                break
+                    # Iterate remanining
+                    print(valid_a, valid_b)
+                    while (valid_a):
+                        self.save_merge_header(tmpfile_id, entry_a)
+                        try:
+                            entry_a = next(block_a)
+                        except:
+                            valid_a = False
+                            break
+                    while (valid_b):
+                        self.save_merge_header(tmpfile_id, entry_b)
+                        try:
+                            entry_b = next(block_b)
+                        except:
+                            valid_b = False
+                            break
+                    print(valid_a, valid_b)
+                    # Overwrite old files
+                    self.remove_headerfile(i)
+                    self.remove_headerfile(i+1)
+                    self.rename_headertmpfile(tmpfile_id)
+                else:
+                    print("SINGLE HEADER FILE SKIPPED:",i)
+                    tmpfile_id+=1
+                    self.rename_headerfile(i, tmpfile_id)
+
+            # Update number of files
+            number_headerfiles = tmpfile_id
+            print("NUMBER OF HEADER FILES:", number_headerfiles)
+
+        
+        
+        
+        ## ------------------------- CREATE INDEX ------------------------
         datafile = self.read_datafile()
-        
         # SPIMI INVERT
         # Init block dict
         block_dict = {}
@@ -241,7 +429,7 @@ class InvertedIndex:
             if paper_count == NUMBER_OF_ENTRIES: 
                 break
             #############################################################
-            if self.memory_usage_block_dict(block_dict) > self.max_file_size:
+            if self.memory_usage_block_dict(block_dict) > self.max_memory_usage:
                 print("MEMORY USAGE EXCEEDED: count {}".format(paper_count))
                 # Save block dict
                 self.save_block_dict(block_dict, indexfile_id)
