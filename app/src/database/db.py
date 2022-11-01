@@ -4,6 +4,7 @@ from decouple import config
 
 def get_connection():
     try:
+        #print("Connecting to database ...")
         return psycopg2.connect(
             host=config('PGSQL_HOST'),
             user=config('PGSQL_USER'),
