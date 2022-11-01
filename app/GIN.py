@@ -1,4 +1,6 @@
 import psycopg2
+import re
+import time
 from src.database.db import get_connection
 from src.models.entities.paper_class import Paper
 
@@ -61,6 +63,64 @@ class GIN_index():
                     """.format(table=table)
                 cursor.execute(consulta_alter)
                 connection.commit()
+        except Exception as e:
+            raise Exception(e)
+
+    @classmethod
+    def query_knn_table(self,table, input_query, k):
+        start_time = time.time()
+        input_query = re.sub(r'[^A-Za-z0-9 ]+', ' ', input_query) # Only alphanumeric
+        query= " | ".join(input_query.split())
+        try:
+            connection = get_connection()
+            with connection.cursor() as cursor:
+                consulta_get = """
+                SELECT id, authors, abstract, categories, title, ts_rank_cd(search_txt, query) AS similarity
+                FROM {table}, to_tsquery('english', '{query}') query
+                where query @@ search_txt
+                order by similarity desc
+                limit {k};
+                    """.format(table=table, query=query, k=k)
+                consulta_analyze = "EXPLAIN ANALYZE " + consulta_get
+                cursor.execute(consulta_analyze)
+                explain_analyze = cursor.fetchall()
+                planning_time = float(re.search("\d+\.\d+",explain_analyze[-2][0])[0])
+                execution_time = float(re.search("\d+\.\d+",explain_analyze[-1][0])[0])
+                total_time = planning_time+execution_time
+                print("GIN Query:", query)
+                print("GIN Pgtime:", total_time)
+                cursor.execute(consulta_get)
+                results = cursor.fetchall()
+                connection.commit()
+            
+            
+            data_index = []
+            for paper_tuple in results:
+                sim = paper_tuple[5]
+                paper_id = paper_tuple[0]
+                paper_authors = paper_tuple[1]
+                paper_abstract = paper_tuple[2]
+                paper_categories = paper_tuple[3]
+                paper_title = paper_tuple[4]
+                info = {
+                    "id":paper_id,
+                    "submitter": "-",
+                    "authors": paper_authors,
+                    "title": paper_title,
+                    "comments": "-",
+                    "journal-ref":"-",
+                    "doi" :"-",
+                    "abstract" :paper_abstract,
+                    "categories" : paper_categories,
+                    "versions" : "-",
+                }
+
+                data_index.append(
+                        {"val": str(sim), "info": info}
+            )
+
+            return [sorted(data_index, key=lambda v: v['val'], reverse=True), round((time.time()-start_time)*1000, 4)]
+
         except Exception as e:
             raise Exception(e)
 

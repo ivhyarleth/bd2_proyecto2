@@ -29,7 +29,7 @@ stemmer = SnowballStemmer('english')
 
 
 ### FOR TESTING set positive
-NUMBER_OF_ENTRIES = 1500 #10000
+NUMBER_OF_ENTRIES = 10000 #10000
 
 
 class InvertedIndex:
@@ -96,7 +96,7 @@ class InvertedIndex:
                                 ensure_ascii=False) + "\n"
             data_len = len(jsondata)
             outfile.write(jsondata)
-            print(data_pos, data_len)
+            #print(data_pos, data_len)
             return data_pos, data_len
     
     def save_header_database(self, block_header, headerfile_id):
@@ -665,7 +665,7 @@ class InvertedIndex:
             papers_data[paper_id]["cos"] = papers_data[paper_id]["cos"] / (norma_query * papers_data[paper_id]["norm"])
             similarity.append( {"paper":paper_id, "similarity":papers_data[paper_id]["cos"]} )
 
-        print(similarity)
+        #print(similarity)
         with io.open('cosenos.json', 'w', encoding='utf8') as outfile:
             str_ = json.dumps(similarity,
                                 indent=4, sort_keys=True,

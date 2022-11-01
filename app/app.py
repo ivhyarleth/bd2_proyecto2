@@ -28,11 +28,21 @@ def index():
 
 @app.route('/kPrimeros', methods=["POST"])
 def kPrimeros():
+    # Extract parameters
     consulta = request.form["consulta"]
     k = request.form["topK"]
-    cosenos = inverted_index.compare_query(consulta)
-    print("cosenos", cosenos[1])
-    return jsonify({"data": cosenos[0][:int(k)], "tiempo": cosenos[1]})
+    # Make querries
+    cosenos_inverted = inverted_index.compare_query(consulta)
+    cosenos_gin = indice_GIN.query_knn_table(tables[2],consulta,5)
+    print("Time inverted:", cosenos_inverted[1])
+    print("Time gin:", cosenos_gin[1])
+    # Return data
+    return jsonify({
+        "data_py": cosenos_inverted[0][:int(k)],
+        "tiempo_py": cosenos_inverted[1],
+        "data_pg": cosenos_gin[0],
+        "tiempo_pg": cosenos_gin[1]
+        })
 
 
 
