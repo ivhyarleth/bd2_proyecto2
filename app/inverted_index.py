@@ -341,10 +341,16 @@ class InvertedIndex:
             paper = self.read_jsonpaper(jsonpaper)
             paper_id = self.extract_id_paper(paper)
             paper_data_entry = {
+                'id':self.extract_field_paper('id',paper),
                 'authors':self.extract_field_paper('authors',paper),
                 'abstract':self.extract_field_paper('abstract',paper),
                 'categories':self.extract_field_paper('categories',paper),
-                'title':self.extract_field_paper('title',paper)
+                'title':self.extract_field_paper('title',paper),
+                'submitter':self.extract_field_paper('submitter',paper),
+                'comments':self.extract_field_paper('comments',paper),
+                'journal-ref':self.extract_field_paper('journal-ref',paper),
+                'doi':self.extract_field_paper('doi',paper),
+                'versions':self.extract_field_paper('versions',paper),
             }
             data_pos, data_len = self.save_paper_database(paper_data_entry)
             paper_head_entry = (paper_id.encode('ascii'), data_pos, data_len, 0.0)
@@ -597,7 +603,6 @@ class InvertedIndex:
                 #norm += (TF*IDF) ** 2
                 updated_norm = data[3] + (TF*IDF)**2
                 modified_data = (data[0],data[1],data[2],updated_norm)
-                print("PAPER POS:",data_pos, "-NORM:",data[3],"-U:",modified_data[3])
                 self.update_header_database(modified_data, data_pos)
             # Total Block
             index_word_block = {word:{"papers":word_block[word],"IDF":IDF}} # NOTE: norm inecesario?
@@ -668,7 +673,20 @@ class InvertedIndex:
                                 separators=(',', ': '), ensure_ascii=False)
             outfile.write(str_)
 
-        return [sorted(similarity, key=lambda v: v['similarity'], reverse=True), round((time.time()-start_time)*1000, 4)]
+        # Transform similarity to expected output by frontend
+        data_index = []
+        for paper_dict in similarity:
+            sim = paper_dict["similarity"]
+            paper_id = paper_dict["paper"]
+            header_data_pos = self.search_header_database(paper_id.encode('ascii'))
+            header_data = self.extract_header_database(header_data_pos)
+            info = self.extract_paper_database(header_data[1],header_data[2])
+
+            data_index.append(
+                    {"val": str(sim), "info": info}
+            )
+
+        return [sorted(data_index, key=lambda v: v['val'], reverse=True), round((time.time()-start_time)*1000, 4)]
 #'''
 
 
