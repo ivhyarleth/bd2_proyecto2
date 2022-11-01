@@ -62,6 +62,11 @@ class InvertedIndex:
 
     
     ###################################################
+    #              UTILITY FUNCTIONS
+    ###################################################
+    def get_file_size(self, file):
+        return os.stat(file).st_size
+    ###################################################
     #              PATH FUNCTIONS
     ###################################################
     def get_indexfile_path(self, number):
@@ -110,6 +115,14 @@ class InvertedIndex:
                 yield data
                 chunk = f.read(self.HEADER_LEN)
 
+    def extract_paper_database(self, data_pos, data_len):
+        with io.open(self.get_database_datafile_path(), 'r', encoding='utf8') as f:
+            f.seek(data_pos)
+            paper_entry = f.read(data_len)
+            jsondata = json.loads(paper_entry)
+            return jsondata
+
+
     def save_merge_header(self, tempfile_id, entry):
         tmpn_filepathn = self.get_database_tmpheadfile_path(tempfile_id)
         with io.open(tmpn_filepathn, 'ab') as outfile:
@@ -117,15 +130,46 @@ class InvertedIndex:
             outfile.write(data)
 
 
+    def update_header_database(self, entry, data_pos):
+        with io.open(self.get_database_headfile_path(0), 'r+b') as outfile:
+            outfile.seek(data_pos)
+            data = struct.pack(self.HEADER_STRUCT, *entry)
+            outfile.write(data)
+
+    def extract_header_database(self, data_pos):
+        with io.open(self.get_database_headfile_path(0), 'rb') as f:
+            f.seek(data_pos)
+            entry = f.read(self.HEADER_LEN)
+            return struct.unpack(self.HEADER_STRUCT, entry)
 
 
+    def search_header_database(self, paper_id):
+        hfile = self.get_database_headfile_path(0)
+        filesize = self.get_file_size(hfile)
+        number_entries = int(filesize/self.HEADER_LEN)
+        low = 0
+        high = number_entries-1
+        while low<=high:
+            mid = (high + low) // 2
+            data = self.extract_header_database(mid*self.HEADER_LEN)
+            data_id = data[0]
+            if data_id < paper_id:
+                low = mid+1
+            elif data_id > paper_id:
+                high = mid-1
+            else:
+                return mid*self.HEADER_LEN
+        return -1 # If not found
 
-
-
-
-
-
-
+    def sqrt_header_norm_database(self):
+        hfile = self.get_database_headfile_path(0)
+        filesize = self.get_file_size(hfile)
+        number_entries = int(filesize/self.HEADER_LEN)
+        for i in range(number_entries):
+            data = self.extract_header_database(i*self.HEADER_LEN)
+            updated_norm = math.sqrt(data[3])
+            modified_data = (data[0],data[1],data[2],updated_norm)
+            self.update_header_database(modified_data, i*self.HEADER_LEN)
 
     ###################################################
     #              READ INDEXFILE FUNCTIONS
@@ -186,8 +230,8 @@ class InvertedIndex:
         else:
             return " "
 
-    def extract_text_paper(self, paper):
-        return " ".join( (self.extract_field_paper('id',paper),
+    def extract_text_paper(self, paper_id, paper):
+        return " ".join( (paper_id,
                  self.extract_field_paper('authors',paper),
                  self.extract_field_paper('abstract',paper),
                  self.extract_field_paper('categories',paper),
@@ -306,7 +350,7 @@ class InvertedIndex:
             paper_head_entry = (paper_id.encode('ascii'), data_pos, data_len, 0.0)
             block_header.append(paper_head_entry)
 
-            if self.memory_usage_block_list_header(block_header) > 5000:#self.max_memory_usage:
+            if self.memory_usage_block_list_header(block_header) > self.max_memory_usage:
                 print("MEMORY USAGE EXCEEDED: count {}".format(paper_count))
                 # Save block list
                 self.save_header_database(block_header, headerfile_id)
@@ -315,7 +359,7 @@ class InvertedIndex:
                 saved = True
             
             ## DEBUG
-            if (paper_count==100):
+            if (paper_count==1000):
                 break
             paper_count += 1
 
@@ -327,7 +371,6 @@ class InvertedIndex:
         number_headerfiles = headerfile_id-1
         merge_step = 2
         while (number_headerfiles): # While more than 1 header
-            time.sleep(5)
             tmpfile_id = 0
             for i in range(0,number_headerfiles+1, merge_step):
                 if (number_headerfiles >= i+1):
@@ -389,20 +432,23 @@ class InvertedIndex:
         
         
         ## ------------------------- CREATE INDEX ------------------------
-        datafile = self.read_datafile()
+        headerfile = self.read_headerfile(0)
+
         # SPIMI INVERT
         # Init block dict
         block_dict = {}
         indexfile_id = 0
         paper_count = 0
-        for jsonpaper in datafile:
+        for header_entry in headerfile:
             saved = False
-            # Parse paper
-            paper = self.read_jsonpaper(jsonpaper)
             # Extract paper id
-            paper_id = self.extract_id_paper(paper)
+            paper_id = header_entry[0].decode('ascii')
+            data_pos = header_entry[1]
+            data_len = header_entry[2]
+            # Extract paper data
+            paper = self.extract_paper_database(data_pos, data_len)
             # Extract text from paper
-            text = self.extract_text_paper(paper)
+            text = self.extract_text_paper(paper_id,paper)
             text_tokenized = self.clean_text(text)
             # Tokenize text
             for word in text_tokenized:
@@ -542,21 +588,28 @@ class InvertedIndex:
             # Calculate IDF
             IDF = math.log(paper_count / len(word_block[word]))
             # Calculate TF*IDF
-            norm = 0
             for id_paper in word_block[word]:
                 TF = 1+math.log(word_block[word][id_paper])
                 word_block[word][id_paper] = TF*IDF
-                norm += (TF*IDF) ** 2
-            # Norm
-            norm = math.sqrt(norm)
+                # Update norm in header
+                data_pos = self.search_header_database(id_paper.encode('ascii'))
+                data = self.extract_header_database(data_pos)
+                #norm += (TF*IDF) ** 2
+                updated_norm = data[3] + (TF*IDF)**2
+                modified_data = (data[0],data[1],data[2],updated_norm)
+                print("PAPER POS:",data_pos, "-NORM:",data[3],"-U:",modified_data[3])
+                self.update_header_database(modified_data, data_pos)
             # Total Block
-            index_word_block = {word:{"papers":word_block[word],"norm":norm,"IDF":IDF}} # NOTE: norm inecesario?
+            index_word_block = {word:{"papers":word_block[word],"IDF":IDF}} # NOTE: norm inecesario?
             # Write to temp
             self.save_calc_dict(index_word_block)
             try:
                 word_block = self.read_jsonblock(next(base_index))
             except:
                 break
+        # UPDATE NORM TO SQRT
+        self.sqrt_header_norm_database()        
+        
 
         # OVERWRITE INDEX
         self.rename_tmpfile(0)
@@ -594,17 +647,17 @@ class InvertedIndex:
                     cosine_pq = TFIDF * entry["papers"][paper_id]
                     if paper_id in papers_data:
                         papers_data[paper_id]["cos"] += cosine_pq
-                        papers_data[paper_id]["norm"] += entry["papers"][paper_id]**2
                     else:
                         papers_data[paper_id] = {}
                         papers_data[paper_id]["cos"] = cosine_pq
-                        papers_data[paper_id]["norm"] = entry["papers"][paper_id]**2
         norma_query = math.sqrt(norma_query)
 
         # Normalizar
         similarity = []
         for paper_id in papers_data:
-            papers_data[paper_id]["norm"] = math.sqrt(papers_data[paper_id]["norm"])
+            data_pos = self.search_header_database(paper_id.encode('ascii'))
+            data = self.extract_header_database(data_pos)
+            papers_data[paper_id]["norm"] = data[3]
             papers_data[paper_id]["cos"] = papers_data[paper_id]["cos"] / (norma_query * papers_data[paper_id]["norm"])
             similarity.append( {"paper":paper_id, "similarity":papers_data[paper_id]["cos"]} )
 
