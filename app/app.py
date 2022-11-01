@@ -30,10 +30,10 @@ def index():
 def kPrimeros():
     # Extract parameters
     consulta = request.form["consulta"]
-    k = request.form["topK"]
+    k = int(request.form["topK"])
     # Make querries
-    cosenos_inverted = inverted_index.compare_query(consulta)
-    cosenos_gin = indice_GIN.query_knn_table(tables[2],consulta,5)
+    cosenos_inverted = inverted_index.compare_query(consulta, k)
+    cosenos_gin = indice_GIN.query_knn_table(tables[2],consulta,k)
     print("Time inverted:", cosenos_inverted[1])
     print("Time gin:", cosenos_gin[1])
     # Return data

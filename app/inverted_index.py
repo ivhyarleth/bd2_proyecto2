@@ -13,7 +13,7 @@ import pickle as serializer
 import io
 import time
 from itertools import islice
-
+import heapq
 import struct
 import time
     
@@ -322,6 +322,12 @@ class InvertedIndex:
     #                MAIN FUNCTIONS
     ###################################################
 
+    def clean_inverted_index(self):
+        files = [self.get_database_datafile_path(), self.get_database_headfile_path(0), self.get_indexfile_path(0)]
+        for f in files:
+            if os.path.exists(f):
+                os.remove(f)
+
     def create_inverted_index(self):
         
         if os.path.isfile( self.get_indexfile_path(0) ):
@@ -620,7 +626,7 @@ class InvertedIndex:
 
 
 
-    def compare_query(self, query):
+    def compare_query(self, query, k):
         start_time = time.time()
         
         query = self.clean_text(query)
@@ -659,24 +665,24 @@ class InvertedIndex:
         # Normalizar
         similarity = []
         for paper_id in papers_data:
+            # Calculate Cosine Norm
             data_pos = self.search_header_database(paper_id.encode('ascii'))
             data = self.extract_header_database(data_pos)
             papers_data[paper_id]["norm"] = data[3]
             papers_data[paper_id]["cos"] = papers_data[paper_id]["cos"] / (norma_query * papers_data[paper_id]["norm"])
-            similarity.append( {"paper":paper_id, "similarity":papers_data[paper_id]["cos"]} )
-
-        #print(similarity)
-        with io.open('cosenos.json', 'w', encoding='utf8') as outfile:
-            str_ = json.dumps(similarity,
-                                indent=4, sort_keys=True,
-                                separators=(',', ': '), ensure_ascii=False)
-            outfile.write(str_)
+            sim = papers_data[paper_id]["cos"]
+            # KNN with heap
+            if len(similarity) < k:
+                heapq.heappush(similarity, (sim, paper_id))
+            else:
+                current_max = similarity[0]
+                if current_max[0] < sim:
+                    heapq.heappop(similarity)
+                    heapq.heappush(similarity, (sim, paper_id))
 
         # Transform similarity to expected output by frontend
         data_index = []
-        for paper_dict in similarity:
-            sim = paper_dict["similarity"]
-            paper_id = paper_dict["paper"]
+        for sim, paper_id in similarity:
             header_data_pos = self.search_header_database(paper_id.encode('ascii'))
             header_data = self.extract_header_database(header_data_pos)
             info = self.extract_paper_database(header_data[1],header_data[2])
@@ -684,6 +690,13 @@ class InvertedIndex:
             data_index.append(
                     {"val": str(sim), "info": info}
             )
+
+        #print(similarity)
+        #with io.open('cosenos.json', 'w', encoding='utf8') as outfile:
+        #    str_ = json.dumps(similarity,
+        #                        indent=4, sort_keys=True,
+        #                        separators=(',', ': '), ensure_ascii=False)
+        #    outfile.write(str_)
 
         return [sorted(data_index, key=lambda v: v['val'], reverse=True), round((time.time()-start_time)*1000, 4)]
 
