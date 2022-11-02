@@ -10,20 +10,33 @@
 ---
 # Proyecto 2 | Recuperación de Documentos de Texto
 
-## Configuracion
-Antes de ejecutar el programa es necesario descargar la base de datos de kaggle (https://www.kaggle.com/datasets/Cornell-University/arxiv), descomprimirla y colocar el archivo json en: app/data/arxiv-metadata-oai-snapshot.json
+### Configuración 
 
-Para ejecutar el programa ingresar a la carpeta app y ejecutar el comando:
+Antes de ejecutar el programa, es necesario descargar la base de datos de kaggle (https://www.kaggle.com/datasets/Cornell-University/arxiv), descomprimirla y colocar el archivo _json_ en: *app/data/arxiv-metadata-oai-snapshot.json*
+
+Para ejecutar el programa ingresar a la carpeta _app_ y ejecutar el comando:
 ```
 python3 app.py
 ```
-
-El app puede ejecutarse con 100, 1000 o 100000 papers. Para seleccionar que opcion se desea utilizar, modificar el valor de NUMBER_ENTRIES_OPTION en app/app.py (0:100, 1:1000, 2:0000).
-
-
+El app puede ejecutarse con 100, 1 000 o 10 000 papers. Para seleccionar que opción se desea utilizar, modificar el valor de NUMBER_ENTRIES_OPTION en *app/app.py (0:100, 1:1000, 2:0000)*.
 
 ## Descripción del dominio de datos
-La fuente de datos del presente proyecto es un repositorio de la pagina de Kaggle cuyo dominio de datos es papers academicos. Las columnas de este repositorio son: ID, SUBMITTER, AUTHORS, TITLE, COMMENTS, JOURNAL, DOI, ABSTRACT, CATEGORIES, VERSIONS. Notese como la mayoria de estos atributos son de longitud variable, por lo que el tipo de queries que se realizaran son de recuperacion de informacion, en las que se buscara extraer los k elementos cuyo contenido sea más similar al de una query proveida en lenguaje natural.
+
+
+La fuente de datos del presente proyecto es un repositorio de la página de _Kaggle_ cuyo dominio de datos son _papers académicos_. Donde cada registro contiene 10 campos, los cuales son:
+
+- ID: Id del _paper_
+- SUBMITTER: Quien envió el trabajo
+- AUTHORS: Autores del artículo
+- TITLE: Título del trabajo
+- COMMENTS: Información adicional
+- JOURNAL: Informacion sobre la revista en la que se publicó el _paper_
+- DOI: Digital Object Identifier
+- ABSTRACT: Resumen del _paper_
+- CATEGORIES: Categoría a la cual pertenece
+- VERSIONS: Historial de versiones
+
+Nótese como la mayoría de estos atributos son de longitud variable, por lo que el tipo de _querys_ que se realizarán son de recuperación de información, en las que se buscará extraer los _k elementos_ cuyo contenido sea más similar al de una _query_ proveída en lenguaje natural.
 
 ## Introducción
 
