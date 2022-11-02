@@ -1,32 +1,5 @@
 Query: fly me to the moon
 K=5
-n       GINexpected InvertedIndex   GINReal
-100     2.767       12.737          1782.5654
-1000    2.962       83.6415         1927.3236
-10000   3.814       352.7265        1802.7799
-
-
-Query: lost in a wormhole
-K=5
-n       GINexpected InvertedIndex   GINReal
-100     2.426       18.3234         1391.8455
-1000    2.651       80.323          1660.4433
-10000   3.797       623.6765        1892.2811
-
-
-Query: finding a loophole in the law
-K=5
-n       GINexpected InvertedIndex   GINReal
-100     5.017       16.1381         1789.6438
-1000    3.193       87.9397         1654.8741
-10000   4.489       659.6773        1670.9051
-
-
-
-
-
-Query: fly me to the moon
-K=5
 n       GINexpected InvertedIndex
 100     3.251       1.6065        
 1000    2.709       1.0059          
@@ -47,8 +20,3 @@ n       GINexpected InvertedIndex
 100     2.897       1.6153        
 1000    3.312       12.2085         
 10000   4.304       150.8048
-
-
-
-test
-10000 3.289 40.4263
