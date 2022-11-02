@@ -412,22 +412,35 @@ def  create_GIN_index(self,tables):
 ```
 ### Análisis comparativo con su propia implementación
 
-Se realizó la experimentación de nuestra implementación, las pruebas se ejecutaron con _database_ de 100, 1 000 y 10 000 _papers_, y _querys_ generadas aleatoriamente con palabras que se encontraron en nuestro índice invertido.
+Se realizó la experimentación de nuestra implementación, las pruebas se ejecutaron con _database_ de 100, 1 000 y 10 000 _papers_, y _querys_ generadas aleatoriamente con palabras que se encontraron en nuestro índice invertido. Asimismo, el tiempo de ejecución de las consultas con *GIN index* en _postgresSQL_ no incluye el tiempo de comunicación entre la base de datos remota, dado que la velocidad y conexión de internet también influyen en ese resultado.
 
 >*QUERY 1*: fly me to the moon 
 >*Top K*: 5
 
-<img src="images/cuadro_query1.jpeg" alt="QUERY 1"/>
+<img src="images/cuadro_query1.jpeg" alt="QUERY 1" width="200"/>
+
 
 >*QUERY 2*: lost in a wormhole
 >*Top K*: 5
 
-<img src="images/cuadro_query1.jpeg" alt="QUERY 2"/>
+<img src="images/cuadro_query1.jpeg" alt="QUERY 2" width="200"/>
 
 >*QUERY 3*: finding a loophole in the law
 >*Top K*: 5
 
-<img src="images/cuadro_query1.jpeg" alt="QUERY 3"/>
+<img src="images/cuadro_query1.jpeg" alt="QUERY 3" width="200"/>
+
+
+### GUI
+
+Se realizó la implementación de una interfaz gráfica para que el usuario pueda interactuar con las funciones de búsqueda y recuperación de _papers_. Es intiutiva y amigable para el usuario, recoge la consulta y solicita que ingrese el _top k_, que es la cantidad de documentos a recuperar según la mayor similitud de su consulta.
+
+<img src="images/gui_view.jpg" alt="GUI VIEW"/>
+
+Asimismo, se añadió los resultados que se obtienen de _postgressql_, para poder visualizar el uso de _GIN_ y comparar la eficiencia de nuestra implementación.
+
+<img src="images/gui_consulta.jpg" alt="GUI QUERY"/>
+
 
 ### GUI
 
