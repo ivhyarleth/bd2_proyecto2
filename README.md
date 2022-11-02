@@ -372,10 +372,10 @@ for paper_id in papers_data:
 
 Se realizó la implementación de una interfaz gráfica para que el usuario pueda interactuar con las funciones de búsqueda y recuperación de _papers_. Es intiutiva y amigable para el usuario, recoge la consulta y solicita que ingrese el _top k_, que es la cantidad de documentos a recuperar según la mayor similitud de su consulta.
 
-<img src="images/gui_view.jpg" alt="GUI VIEW"/>
+<img src="images/gui_view.jpeg" alt="GUI VIEW"/>
 
 Asimismo, se añadió los resultados que se obtienen de _postgresql_, para poder visualizar el uso de _GINS_ y comparar la eficiencia de nuestra implementación.
 
-<img src="images/gui_consulta.jpg" alt="GUI QUERY"/>
+<img src="images/gui_consulta.jpeg" alt="GUI QUERY"/>
 
 
