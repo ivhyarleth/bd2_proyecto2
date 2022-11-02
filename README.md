@@ -18,7 +18,7 @@ Para ejecutar el programa ingresar a la carpeta app y ejecutar el comando:
 python3 app.py
 ```
 
-El app puede ejecutarse con 100, 1000 o 100000 papers. Para seleccionar cual de las opciones modificar el valor de NUMBER_ENTRIES_OPTION en app/app.py (0:100, 1:1000, 2:0000).
+El app puede ejecutarse con 100, 1000 o 100000 papers. Para seleccionar que opcion se desea utilizar, modificar el valor de NUMBER_ENTRIES_OPTION en app/app.py (0:100, 1:1000, 2:0000).
 
 
 
