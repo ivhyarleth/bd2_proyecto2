@@ -7,7 +7,7 @@
 - Sara Junco, Juan Sebastian 
 - Ponce Contreras, Luis Eduardo
 - Lapa Carhuamaca, Arleth Ivhy
-- 
+
 | CUADRO DE ACTIVIDADES                                      |
 |-----------------------|------------------------------------|
 | Rodrigo Salazar       | Implementación SPIMI               |
