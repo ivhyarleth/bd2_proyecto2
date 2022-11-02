@@ -423,12 +423,12 @@ Se realizó la experimentación de nuestra implementación, las pruebas se ejecu
 >*QUERY 2*: lost in a wormhole
 >*Top K*: 5
 
-<img src="images/cuadro_query1.jpeg" alt="QUERY 2" width="400"/>
+<img src="images/cuadro_query2.jpeg" alt="QUERY 2" width="400"/>
 
 >*QUERY 3*: finding a loophole in the law
 >*Top K*: 5
 
-<img src="images/cuadro_query1.jpeg" alt="QUERY 3" width="400"/>
+<img src="images/cuadro_query3.jpeg" alt="QUERY 3" width="400"/>
 
 
 ### GUI
