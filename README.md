@@ -116,7 +116,7 @@ En el apartado de Ejecución óptima de las consultas se describe a mayor detall
 
 Para poder garantizar la escalabilidad de la base de datos indexada, se ha unido el algoritmo mencionado en la sección previa con el algoritmo de *SPIMI*.
 
-Para ello, se maneja con tres archivos principales:
+Para ello, se maneja con cuatro archivos principales:
 
 - database_data.bin : Archivo de texto de longitud variable. Contiene la data de cada paper
 
