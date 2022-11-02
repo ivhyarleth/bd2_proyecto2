@@ -417,39 +417,28 @@ Se realizó la experimentación de nuestra implementación, las pruebas se ejecu
 >*QUERY 1*: fly me to the moon 
 >*Top K*: 5
 
-<img src="images/cuadro_query1.jpeg" alt="QUERY 1" width="200"/>
+<img src="images/cuadro_query1.jpeg" alt="QUERY 1" width="400"/>
 
 
 >*QUERY 2*: lost in a wormhole
 >*Top K*: 5
 
-<img src="images/cuadro_query1.jpeg" alt="QUERY 2" width="200"/>
+<img src="images/cuadro_query1.jpeg" alt="QUERY 2" width="400"/>
 
 >*QUERY 3*: finding a loophole in the law
 >*Top K*: 5
 
-<img src="images/cuadro_query1.jpeg" alt="QUERY 3" width="200"/>
+<img src="images/cuadro_query1.jpeg" alt="QUERY 3" width="400"/>
 
 
 ### GUI
 
 Se realizó la implementación de una interfaz gráfica para que el usuario pueda interactuar con las funciones de búsqueda y recuperación de _papers_. Es intiutiva y amigable para el usuario, recoge la consulta y solicita que ingrese el _top k_, que es la cantidad de documentos a recuperar según la mayor similitud de su consulta.
 
-<img src="images/gui_view.jpg" alt="GUI VIEW"/>
+<img src="images/gui_view.jpeg" alt="GUI VIEW" width="400"/>
 
-Asimismo, se añadió los resultados que se obtienen de _postgressql_, para poder visualizar el uso de _GIN_ y comparar la eficiencia de nuestra implementación.
+Asimismo, se añadió los resultados que se obtienen de _postgresql_, para poder visualizar el uso de _GIN_ y comparar la eficiencia de nuestra implementación.
 
-<img src="images/gui_consulta.jpg" alt="GUI QUERY"/>
-
-
-### GUI
-
-Se realizó la implementación de una interfaz gráfica para que el usuario pueda interactuar con las funciones de búsqueda y recuperación de _papers_. Es intiutiva y amigable para el usuario, recoge la consulta y solicita que ingrese el _top k_, que es la cantidad de documentos a recuperar según la mayor similitud de su consulta.
-
-<img src="images/gui_view.jpeg" alt="GUI VIEW"/>
-
-Asimismo, se añadió los resultados que se obtienen de _postgresql_, para poder visualizar el uso de _GINS_ y comparar la eficiencia de nuestra implementación.
-
-<img src="images/gui_consulta.jpeg" alt="GUI QUERY"/>
+<img src="images/gui_consulta.jpeg" alt="GUI QUERY" width="400"/>
 
 
