@@ -183,7 +183,6 @@ class InvertedIndex:
         return json.loads(jsonpaper)
 
     def find_entry(self, word):
-        #TODO: OPTIMIZE WITH EXTRA FILE WITH POINTERS TO START OF JSONS AND LEN
         fileread = self.read_indexfile(0)
         for jsondata in fileread:
             entry = self.read_jsonblock(jsondata)
