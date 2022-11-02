@@ -1,3 +1,4 @@
+
 ### BD2 - Grupo 4
 
 **_Integrantes:_**
@@ -90,8 +91,8 @@ Se recibe una consulta ingresada por el usuario, esta es una frase en lenguaje n
 -   Halla la frecuencia de cada palabra en el _query_
 -   Si la palabra esta en un indice invertido, se calcula el indice invertido
 -   Obtiene el *tf-idf* del _query_
-- 
-Al final, se ordena la lista de cosenos obtenidos, donde se guarda el *paper_id** del documento, la similitud respectiva y su lista de _papers_ de mayor a menor por el que tenga mayor similitud .
+
+Al final, se ordena la lista de cosenos obtenidos, donde se guarda el *paper_id** del documento, la similitud respectiva y un arreglo de _papers_ de mayor a menor por el que tenga mayor similitud .
 ```
 similarity = []
 for  paper_id  in  papers_data:
@@ -101,15 +102,23 @@ for  paper_id  in  papers_data:
 	papers_data[paper_id]["cos"] = papers_data[paper_id]["cos"] / (norma_query * papers_data[paper_id]["norm"])
 	similarity.append( {"paper":paper_id,"similarity":papers_data[paper_id]["cos"]} )
 ```
+En el apartado de Ejecución óptima de las consultas se describe a mayor detalle la implementación del código para lograr resultado con los _k papers_ más similares.
+
 ### Manejo de memoria secundaria
-Para poder garantizar la escalabilidad de la base de datos indexada, se ha unido el algoritmo mencionado en la seccion previa con el algoritmo de SPIMI.
+
+Para poder garantizar la escalabilidad de la base de datos indexada, se ha unido el algoritmo mencionado en la sección previa con el algoritmo de *SPIMI*.
+
 Para ello, se maneja con tres archivos principales:
 
-- database_data.bin  : Archivo de texto de longitud variable. Contiene la data de cada paper
-- database_head0.bin : Archivo binario de texto que sirve como cabecera para database_data.bin, garantizando acceso en O(1) y busqueda en O(log n)
-- indice_invertido0.json : Indice invertido
+- database_data.bin : Archivo de texto de longitud variable. Contiene la data de cada paper
 
-Entonces, primero construimos nuestros archivos database utilizando usando buckets de head y un mergesort. Cada entrada en el archivo header contiene (paper_id, pos_data, pos_len, norm). Donde norm es inicializado en 0.0 y sera usado como el valor sobre el cual debemos dividir el coseno calculado con dicho documento para normalizarlo.
+- database_head0.bin : Archivo binario de texto que sirve como cabecera para database_data.bin, garantizando acceso en _O(1)_ y búsqueda en _O(log n)_
+
+- indice_invertido0.json : Índice invertido
+
+  
+
+Entonces, primero construimos nuestros archivos _database_ utilizando usando buckets de _head_ y un _mergesort_. Cada entrada en el archivo header contiene *(paper_id, pos_data, pos_len, norm)*. Donde _norm_ es inicializado en _0.0_ y será usado como el valor sobre el cual debemos dividir el _coseno_ calculado con dicho documento para normalizar.
 
 Se presenta el algoritmo simplificado para crear la database:
 ```
@@ -170,7 +179,7 @@ while (number_headerfiles != 0):    # While more than 1 header
     number_headerfiles = tmpfile_id
 ```
 
-Posteriormente, con la database creamos el indice usando el algoritmo de la seccion previa. Este a sido fusionado con SPIMI. De esta forma, en vez de guardar una diccionario de listas {word:docID_list}, se guarda un diccionario de diccionario de repeticiones {word:{docID:count}}. El algoritmo simplicado para realizar esta operacion se muestra a continuacion.
+Posteriormente, con la _database_ creamos el índice usando el algoritmo de la sección previa. Este a sido fusionado con _SPIMI_. De esta forma, en vez de guardar una diccionario de *listas {word:docID_list}*, se guarda un diccionario de diccionario de repeticiones *{word:{docID:count}}*. El algoritmo simplificado para realizar esta operación se muestra a continuación:
 ```
 # CREAR INDICE PRELIMINAR
 
@@ -264,7 +273,7 @@ while (number_indexfiles!=0): # While more than 1 file
     number_indexfiles = tmpfile_id
 ```
 
-El archivo preliminar obtenido de hacer el InvertSPIMI y MergeSPIMI luego se itera sequencialmente para convertir los diccionarios {word:{docID:count}} en diccionarios de {word:{docID:TF-IDF}} y calcular la norma de los documentos (actualizando en el header). El algoritmo simplicado para realizar esta operacion se muestra a continuacion.
+El archivo preliminar obtenido de hacer el _InvertSPIMI_ y _MergeSPIMI_ luego se itera secuencialmente para convertir los diccionarios _{word:{docID:count}}_ en diccionarios de _{word:{docID:TF-IDF}}_ y calcular la norma de los documentos (actualizando en el header). El algoritmo simplificado para realizar esta operación se muestra a continuación.
 
 ```
 base_index = read_indexfile(0)
@@ -295,11 +304,12 @@ rename_tmpfile(0)
 ```
 
 ### Ejecuccion Optima de consultas
-Las consultas se ejecutan de forma optima utilizando el indice invertido construido con los pasos previamente explicados. 
 
-Para ello, primero se constuye un diccionario de conteo de palabras de la query dada como entrada. Con dicho diccionario se itera sobre cada una de sus palabras: se busca en el indice invertido. Si esta existe, se extrae el IDF para calcular el TFIDF del termino para la query, y para cada documento que aparece en el indice con ese termino, se calcula su producto, agregandolos a un diccionario de papers (agregando el paper si no esta, o sumando el valor calculado si ya existe). En paralelo, se obtiene la norm de la query.
+Las consultas se ejecutan de forma óptima utilizando el índice invertido construido con los pasos previamente explicados.
 
-Con el diccionario de producto coseno por paper, este se normaliza usando la norm de la query calculada y la norm del paper, extraido de database_head0.bin en O(log n) por busqueda binaria. El valor normalizado se inserta a un heap de los k mas similares. El resultado es un arreglo con los k papers mas similares.
+Para ello, primero se construye un diccionario de conteo de palabras de la query dada como entrada. Con dicho diccionario se itera sobre cada una de sus palabras: se busca en el índice invertido. Si esta existe, se extrae el _IDF_ para calcular el _TFIDF_ del término para la _query_, y para cada documento que aparece en el índice con ese término, se calcula su producto, agregandolos a un diccionario de papers (agregando el paper si no está, o sumando el valor calculado si ya existe). En paralelo, se obtiene la *norm* de la query.
+
+Con el diccionario de producto coseno por paper, éste se normaliza usando la norm de la query calculada y la norm del paper, extraído de *database_head0.bin* en *O(log n)* por búsqueda binaria. El valor normalizado se inserta a un heap de los k mas similares. El resultado es un arreglo con los *k papers* más similares.
 ```
 index_query = {}
 
@@ -355,9 +365,17 @@ for paper_id in papers_data:
 ## Frontend
 
 ### Diseño del índice con PostgresSQL
-La presentación final en video se encuentra en el siguiente [link](url).
+
 ### Análisis comparativo con su propia implementación
 
 ### GUI
+
+Se realizó la implementación de una interfaz gráfica para que el usuario pueda interactuar con las funciones de búsqueda y recuperación de _papers_. Es intiutiva y amigable para el usuario, recoge la consulta y solicita que ingrese el _top k_, que es la cantidad de documentos a recuperar según la mayor similitud de su consulta.
+
+<img src="images/gui_view.jpg" alt="GUI VIEW"/>
+
+Asimismo, se añadió los resultados que se obtienen de _postgresql_, para poder visualizar el uso de _GINS_ y comparar la eficiencia de nuestra implementación.
+
+<img src="images/gui_consulta.jpg" alt="GUI QUERY"/>
 
 
