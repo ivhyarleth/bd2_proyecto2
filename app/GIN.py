@@ -115,9 +115,7 @@ class GIN_index():
                     "versions" : "-",
                 }
 
-                data_index.append(
-                        {"val": str(sim), "info": info}
-            )
+                data_index.append({"val": str(sim), "info": info})
 
             return [sorted(data_index, key=lambda v: v['val'], reverse=True), round((time.time()-start_time)*1000, 4)]
 
