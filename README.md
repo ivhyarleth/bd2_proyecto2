@@ -365,6 +365,46 @@ for paper_id in papers_data:
 ## Frontend
 
 ### Diseño del índice con PostgresSQL
+				PostgresSQL cuenta con GIN, el cual significa Índice Invertido Generalizado. GIN maneja los elementos que podrían ser documentos y las consultas podrían ser búsquedas de documentos que contengan palabras específicas, por lo cual se implementó un "GIN_index" para poder realizar la comparación de tiempos de nuestra implementación y la de _postgresSQL_.
+
+*GIN_index* es una clase que contiene la estructura del índice invertido, las funciones principales que son parte de la implementación son las siguientes:
+- create_index
+- stored_method_extend_table
+- query_knn_table
+
+Se realizó las siguientes consultas para procesar la _query_ para que posteriormente se cree el índice invertido:
+```
+DO $$
+BEGIN
+IF NOT EXISTS (	SELECT column_name
+				FROM information_schema.columns
+				WHERE table_schema = 'public'
+				AND table_name = '{table}'
+				AND column_name = 'search_txt') THEN
+	ALTER TABLE {table} ADD COLUMN search_txt tsvector;
+	UPDATE {table} SET search_txt = setweight(to_tsvector('english', id), 'A') || setweight(to_tsvector('english', title), 'B') || setweight(to_tsvector('english', categories), 'C');
+END IF;
+END
+```
+```
+SELECT id, authors, abstract, categories, title, ts_rank_cd(search_txt, query) AS similarity
+FROM {table}, to_tsquery('english', '{query}') query
+where query @@ search_txt
+order by similarity desc
+limit {k};
+```
+Luego se valida recorriendo las tablas y se crea el índice invertido generalizado.
+```
+#Postgressql
+CREATE INDEX 
+IF NOT EXISTS paper_search_{table} ON {table} USING GIN (search_txt);
+
+#Python
+def  create_GIN_index(self,tables):
+	for  table  in  tables:
+		print("Validating GIN index for table {table}".format(table=table))
+		self.stored_method_extend_table(table)
+		self.create_index(table)
 
 ### Análisis comparativo con su propia implementación
 
