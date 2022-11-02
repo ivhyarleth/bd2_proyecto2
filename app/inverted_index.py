@@ -203,11 +203,13 @@ class InvertedIndex:
         with io.open(self.get_indexfile_path(0), 'r', encoding='utf8') as f:
             f.seek(data_pos)
             paper_entry = f.read(data_len)
+            print("PAPER ENTRY", paper_entry)
             jsondata = json.loads(paper_entry)
             entryword = list(jsondata.keys())[0]
             return jsondata[entryword]
 
     def find_entry(self, word):
+        print("WORD",word)
         wordbin = word.ljust(32).encode('ascii')
 
         hfile = self.index_head_filename
@@ -224,6 +226,9 @@ class InvertedIndex:
             elif data_id > wordbin:
                 high = mid-1
             else:
+                print("DATA_ID:",data[0])
+                print("POS:",data[1])
+                print("LEN:",data[2])
                 return self.extract_entry_index(data[1], data[2])
         return None
 
@@ -378,6 +383,12 @@ class InvertedIndex:
             TMP = outfile.tell()
         with io.open(self.index_head_filename, 'ab') as f:
             word = list(word_dict.keys())[0]
+            if (word == "find"):
+                print("FIND")
+                print(data_pos)
+                print(data_len)
+                print(TMP)
+                print("------")
             data = struct.pack(self.INDEX_HEADER_STRUCT, word.ljust(32)[:32].encode('ascii'),data_pos,data_len)
             f.write(data)
         
@@ -484,6 +495,7 @@ class InvertedIndex:
                                 valid_b = False
                                 break
                     # Iterate remanining
+                    print(valid_a, valid_b)
                     while (valid_a):
                         self.save_merge_header(tmpfile_id, entry_a)
                         try:
@@ -498,6 +510,7 @@ class InvertedIndex:
                         except:
                             valid_b = False
                             break
+                    print(valid_a, valid_b)
                     # Overwrite old files
                     self.remove_headerfile(i)
                     self.remove_headerfile(i+1)
