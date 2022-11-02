@@ -90,12 +90,7 @@ for  word  in  text_tokenized:
 
 Para la construcción del índice invertido se tiene como base principal una clase a la cual denominaremos "InvertedIndex". En dicha clase, se ha distribuido en distintas funciones los pasos para la construcción de este índice.  
 
-La función "create_inverted_index" contiene la estructura del índice invertido para guardar los pesos TF-IDF, además que esta función incluye la construcción del índice en memoria secundaria el cual utiliza el algoritmo de *Single-pass in-memory indexing (SPIMI)*. Este algoritmo realiza la construcción del índice en memoria secundaria, debido a que este algoritmo es óptimo para el manejo de una gran colección de datos que contiene nuestra _data_. Este genera diccionarios (Hash) separados para cada bloque, sin necesidad de mantener el mapeo *<termino - IdTermino>* entre los bloques, además, esta no se debe de ordenar, sino acumular en el hash las publicaciones en listas a medida que van ocurriendo y al final se debe de ejecutar un merge en un "Big Index".A continuación, se mencionan las funciones que son parte de la implementación del algoritmo:
-- save_block_dict
-- save_merge_dict
-- save_calc_dict
-- memory_usage_block_dict
-- memory_usage_block_list_header
+La función "create_inverted_index" contiene la estructura del índice invertido para guardar los pesos TF-IDF, además que esta función incluye la construcción del índice en memoria secundaria el cual utiliza el algoritmo de *Single-pass in-memory indexing (SPIMI)*. Este algoritmo realiza la construcción del índice en memoria secundaria, debido a que este algoritmo es óptimo para el manejo de una gran colección de datos que contiene nuestra _data_. Este genera diccionarios (Hash) separados para cada bloque, sin necesidad de mantener el mapeo *<termino - IdTermino>* entre los bloques, además, esta no se debe de ordenar, sino acumular en el hash las publicaciones en listas a medida que van ocurriendo y al final se debe de ejecutar un merge en un "Big Index".
 
 #### Consulta
 Se recibe una consulta ingresada por el usuario, esta es una frase en lenguaje natural, para obtener los resultados de dicha consulta se implementó la función *compare_query(query)*, la cual realiza el siguiente procedimiento:
