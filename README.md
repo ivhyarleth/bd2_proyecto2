@@ -112,9 +112,11 @@ Para ello, se maneja con tres archivos principales:
 
 - database_data.bin : Archivo de texto de longitud variable. Contiene la data de cada paper
 
-- database_head0.bin : Archivo binario de texto que sirve como cabecera para database_data.bin, garantizando acceso en _O(1)_ y búsqueda en _O(log n)_
+- database_head0.bin : Archivo binario que sirve como cabecera para database_data.bin, garantizando acceso en _O(1)_ y búsqueda en _O(log n)_
 
-- indice_invertido0.json : Índice invertido
+- indice_invertido0.json : Archivo de texto de invertido invertido. Contiene la data asociada a cada palabra
+
+- indice_head.bin: Archivo binario que sirve como cabecera para indice_invertido0.json, garantizando acceso en _O(1)_ y búsqueda en _O(log n)_
 
   
 
@@ -179,7 +181,7 @@ while (number_headerfiles != 0):    # While more than 1 header
     number_headerfiles = tmpfile_id
 ```
 
-Posteriormente, con la _database_ creamos el índice usando el algoritmo de la sección previa. Este a sido fusionado con _SPIMI_. De esta forma, en vez de guardar una diccionario de *listas {word:docID_list}*, se guarda un diccionario de diccionario de repeticiones *{word:{docID:count}}*. El algoritmo simplificado para realizar esta operación se muestra a continuación:
+Posteriormente, con la _database_ creamos el índice usando el algoritmo de la sección previa. Este a sido fusionado con _SPIMI_. De esta forma, en vez de guardar un diccionario de *listas {word:docID_list}*, se guarda un diccionario de diccionario de repeticiones *{word:{docID:count}}*. El algoritmo simplificado para realizar esta operación se muestra a continuación:
 ```
 # CREAR INDICE PRELIMINAR
 
@@ -273,10 +275,11 @@ while (number_indexfiles!=0): # While more than 1 file
     number_indexfiles = tmpfile_id
 ```
 
-El archivo preliminar obtenido de hacer el _InvertSPIMI_ y _MergeSPIMI_ luego se itera secuencialmente para convertir los diccionarios _{word:{docID:count}}_ en diccionarios de _{word:{docID:TF-IDF}}_ y calcular la norma de los documentos (actualizando en el header). El algoritmo simplificado para realizar esta operación se muestra a continuación.
+El archivo preliminar obtenido de hacer el _InvertSPIMI_ y _MergeSPIMI_ luego se itera secuencialmente para convertir los diccionarios _{word:{docID:count}}_ en diccionarios de _{word:{docID:TF-IDF}}_ y calcular la norma de los documentos (actualizando en el header). Adicionalmente, cada vez que se agrega una entrada al indice final, se guarda tambien su posicion y longitud en _indice_head.bin_ usando la palabra como llave.El algoritmo simplificado para realizar esta operación se muestra a continuación.
 
 ```
-base_index = read_indexfile(0)
+move_indexfile_to_tmpfile()
+base_index = read_tmpfile(0)
 word_block = base_index.entry
 while (base_index):
     word = word_block.word
@@ -299,8 +302,8 @@ while (base_index):
     base_index.next_entry()
 # UPDATE NORM TO SQRT
 sqrt_header_norm_database()
-# OVERWRITE INDEX
-rename_tmpfile(0)
+# REMOVE TMPFILE
+remove_tmpfile(0)
 ```
 
 ### Ejecuccion Optima de consultas

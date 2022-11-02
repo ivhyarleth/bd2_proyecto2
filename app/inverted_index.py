@@ -389,7 +389,7 @@ class InvertedIndex:
                 print(data_len)
                 print(TMP)
                 print("------")
-            data = struct.pack(self.INDEX_HEADER_STRUCT, word.ljust(32).encode('ascii'),data_pos,data_len)
+            data = struct.pack(self.INDEX_HEADER_STRUCT, word.ljust(32)[:32].encode('ascii'),data_pos,data_len)
             f.write(data)
         
 
