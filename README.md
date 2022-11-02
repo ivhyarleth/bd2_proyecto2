@@ -365,7 +365,8 @@ for paper_id in papers_data:
 ## Frontend
 
 ### Diseño del índice con PostgresSQL
-				PostgresSQL cuenta con GIN, el cual significa Índice Invertido Generalizado. GIN maneja los elementos que podrían ser documentos y las consultas podrían ser búsquedas de documentos que contengan palabras específicas, por lo cual se implementó un "GIN_index" para poder realizar la comparación de tiempos de nuestra implementación y la de _postgresSQL_.
+
+PostgresSQL cuenta con GIN, el cual significa Índice Invertido Generalizado. GIN maneja los elementos que podrían ser documentos y las consultas podrían ser búsquedas de documentos que contengan palabras específicas, por lo cual se implementó un "GIN_index" para poder realizar la comparación de tiempos de nuestra implementación y la de _postgresSQL_.
 
 *GIN_index* es una clase que contiene la estructura del índice invertido, las funciones principales que son parte de la implementación son las siguientes:
 - create_index
@@ -405,7 +406,7 @@ def  create_GIN_index(self,tables):
 		print("Validating GIN index for table {table}".format(table=table))
 		self.stored_method_extend_table(table)
 		self.create_index(table)
-
+```
 ### Análisis comparativo con su propia implementación
 
 ### GUI
