@@ -598,7 +598,7 @@ class InvertedIndex:
         
         # ADD TF.IDF TO INDEX
         print(">>> CALCULATING TFIDF <<<")
-        base_index = self.read_indexfile(i)
+        base_index = self.read_indexfile(0)
         word_block = self.read_jsonblock(next(base_index))
         while (True):
             word = list(word_block.keys())[0]
