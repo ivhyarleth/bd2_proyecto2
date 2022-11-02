@@ -20,3 +20,35 @@ n       GINexpected InvertedIndex   GINReal
 100     5.017       16.1381         1789.6438
 1000    3.193       87.9397         1654.8741
 10000   4.489       659.6773        1670.9051
+
+
+
+
+
+Query: fly me to the moon
+K=5
+n       GINexpected InvertedIndex
+100     3.251       1.6065        
+1000    2.709       1.0059          
+10000   2.983       3.4442
+
+
+Query: lost in a wormhole
+K=5
+n       GINexpected InvertedIndex
+100     2.732       0.4234      
+1000    2.973       0.9973
+10000   3.71        4.1535
+
+
+Query: finding a loophole in the law
+K=5
+n       GINexpected InvertedIndex   
+100     2.897       1.6153        
+1000    3.312       12.2085         
+10000   4.304       150.8048
+
+
+
+test
+10000 3.289 40.4263

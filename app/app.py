@@ -9,7 +9,7 @@ from GIN import GIN_index
 from src.routes import papers_route
 
 
-NUMBER_ENTRIES_OPTION = 0
+NUMBER_ENTRIES_OPTION = 2
 
 
 

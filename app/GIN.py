@@ -117,7 +117,7 @@ class GIN_index():
 
                 data_index.append({"val": str(sim), "info": info})
 
-            return [sorted(data_index, key=lambda v: v['val'], reverse=True), round((time.time()-start_time)*1000, 4)]
+            return [sorted(data_index, key=lambda v: v['val'], reverse=True), total_time]#round((time.time()-start_time)*1000, 4)]
 
         except Exception as e:
             raise Exception(e)

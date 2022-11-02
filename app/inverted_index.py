@@ -50,6 +50,8 @@ class InvertedIndex:
         # Index Files
         self.index_filename = "indice_invertido"
         self.index_extension = ".json"
+        self.index_head_filename = "indice_head.bin"
+        self.INDEX_HEADER_STRUCT = '32sII'
         # Temporary Files
         self.tmp_filename = "tmpfile"
         # Properties/Config
@@ -58,6 +60,9 @@ class InvertedIndex:
         # Calculate header struct size in bytes
         entry = ("sample".ljust(32).encode('ascii'),1,1,0.0)
         self.HEADER_LEN = len(struct.pack(self.HEADER_STRUCT, *entry))
+        ientry = ("sample".ljust(32).encode('ascii'),1,1)
+        self.INDEX_HEADER_LEN = len(struct.pack(self.INDEX_HEADER_STRUCT, *ientry))
+
         self.NUMBER_OF_ENTRIES = number_entries
 
     
@@ -94,7 +99,7 @@ class InvertedIndex:
         with io.open(self.get_database_datafile_path(), 'a', encoding='utf8') as outfile:
             data_pos = outfile.tell()
             jsondata = json.dumps(paper_entry,
-                                ensure_ascii=False) + "\n"
+                                ensure_ascii=True) + "\n"
             data_len = len(jsondata)
             outfile.write(jsondata)
             #print(data_pos, data_len)
@@ -179,17 +184,66 @@ class InvertedIndex:
             for line in f:
                 yield line
 
+    def read_tpmfile(self, n):
+        with open(self.get_tmpfile_path(n), 'r') as f:
+            for line in f:
+                yield line
+
     def read_jsonblock(self,jsonpaper):
         return json.loads(jsonpaper)
 
+
+    def extract_header_index(self, data_pos):
+        with io.open(self.index_head_filename, 'rb') as f:
+            f.seek(data_pos)
+            entry = f.read(self.INDEX_HEADER_LEN)
+            return struct.unpack(self.INDEX_HEADER_STRUCT, entry)
+
+    def extract_entry_index(self, data_pos, data_len):
+        with io.open(self.get_indexfile_path(0), 'r', encoding='utf8') as f:
+            f.seek(data_pos)
+            paper_entry = f.read(data_len)
+            print("PAPER ENTRY", paper_entry)
+            jsondata = json.loads(paper_entry)
+            entryword = list(jsondata.keys())[0]
+            return jsondata[entryword]
+
     def find_entry(self, word):
-        fileread = self.read_indexfile(0)
-        for jsondata in fileread:
-            entry = self.read_jsonblock(jsondata)
-            entryword = list(entry.keys())[0]
-            if (entryword == word):
-                return entry[word]
+        print("WORD",word)
+        wordbin = word.ljust(32).encode('ascii')
+
+        hfile = self.index_head_filename
+        filesize = self.get_file_size(hfile)
+        number_entries = int(filesize/self.INDEX_HEADER_LEN)
+        low = 0
+        high = number_entries-1
+        while low<=high:
+            mid = (high + low) // 2
+            data = self.extract_header_index(mid*self.INDEX_HEADER_LEN)
+            data_id = data[0]
+            if data_id < wordbin:
+                low = mid+1
+            elif data_id > wordbin:
+                high = mid-1
+            else:
+                print("DATA_ID:",data[0])
+                print("POS:",data[1])
+                print("LEN:",data[2])
+                return self.extract_entry_index(data[1], data[2])
         return None
+
+
+
+
+
+        #fileread = self.read_indexfile(0)
+        #for jsondata in fileread:
+        #    entry = self.read_jsonblock(jsondata)
+        #    entryword = list(entry.keys())[0]
+        #    if (entryword == word):
+        #        return entry[word]
+        #return None
+
 
     ###################################################
     #              MANAGEFILES
@@ -209,8 +263,15 @@ class InvertedIndex:
     def rename_indexfile(self, a, b):
         os.rename(self.get_indexfile_path(a), self.get_indexfile_path(b))
 
+    def rename_indexfile_to_tmpfile(self, n):
+        os.rename(self.get_indexfile_path(n), self.get_tmpfile_path(n))
+
     def rename_tmpfile(self, n):
         os.rename(self.get_tmpfile_path(n), self.get_indexfile_path(n))
+
+
+    def remove_tmpfile(self, n):
+        os.remove(self.get_tmpfile_path(n))
 
     ###################################################
     #              READ DATAFILE FUNCTIONS
@@ -295,7 +356,7 @@ class InvertedIndex:
         with io.open(indexn_filepath, 'w', encoding='utf8') as outfile:
             for word in sorted(block_dict.keys()):
                 jsondata = json.dumps({word:block_dict[word]},
-                                ensure_ascii=False) + "\n"
+                                ensure_ascii=True) + "\n"
                 outfile.write(jsondata)
 
     ###################################################
@@ -305,18 +366,32 @@ class InvertedIndex:
         tmpn_filepath = self.get_tmpfile_path(tempfile_id)
         with io.open(tmpn_filepath, 'a', encoding='utf8') as outfile:
             jsondata = json.dumps(word_dict,
-                                  ensure_ascii=False) + "\n"
+                                  ensure_ascii=True) + "\n"
             outfile.write(jsondata)
 
     ###################################################
     #              WRITE CALC TMP BLOCK
     ###################################################
     def save_calc_dict(self, word_dict):
-        tmpn_filepath = self.get_tmpfile_path(0)
-        with io.open(tmpn_filepath, 'a', encoding='utf8') as outfile:
+        index_filepath = self.get_indexfile_path(0)
+        with io.open(index_filepath, 'a', encoding='utf8') as outfile:
+            data_pos = outfile.tell()
             jsondata = json.dumps(word_dict,
-                                  ensure_ascii=False) + "\n"
+                                  ensure_ascii=True) + "\n"
+            data_len = len(jsondata)
             outfile.write(jsondata)
+            TMP = outfile.tell()
+        with io.open(self.index_head_filename, 'ab') as f:
+            word = list(word_dict.keys())[0]
+            if (word == "find"):
+                print("FIND")
+                print(data_pos)
+                print(data_len)
+                print(TMP)
+                print("------")
+            data = struct.pack(self.INDEX_HEADER_STRUCT, word.ljust(32).encode('ascii'),data_pos,data_len)
+            f.write(data)
+        
 
     ###################################################
     #                MAIN FUNCTIONS
@@ -597,7 +672,8 @@ class InvertedIndex:
         
         # ADD TF.IDF TO INDEX
         print(">>> CALCULATING TFIDF <<<")
-        base_index = self.read_indexfile(0)
+        self.rename_indexfile_to_tmpfile(0)
+        base_index = self.read_tpmfile(0)
         word_block = self.read_jsonblock(next(base_index))
         while (True):
             word = list(word_block.keys())[0]
@@ -625,8 +701,10 @@ class InvertedIndex:
         # UPDATE NORM TO SQRT
         print(">>> UPDATE NORM <<<")
         self.sqrt_header_norm_database()
-        # OVERWRITE INDEX
-        self.rename_tmpfile(0)
+        ## Remove tmpfile
+        self.remove_tmpfile(0)
+        ## OVERWRITE INDEX
+        #self.rename_tmpfile(0)
 
         print(">>> --- END --- <<<")
 
@@ -701,7 +779,7 @@ class InvertedIndex:
         #with io.open('cosenos.json', 'w', encoding='utf8') as outfile:
         #    str_ = json.dumps(similarity,
         #                        indent=4, sort_keys=True,
-        #                        separators=(',', ': '), ensure_ascii=False)
+        #                        separators=(',', ': '), ensure_ascii=True)
         #    outfile.write(str_)
 
         return [sorted(data_index, key=lambda v: v['val'], reverse=True), round((time.time()-start_time)*1000, 4)]
