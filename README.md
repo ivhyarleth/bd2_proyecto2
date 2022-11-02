@@ -10,9 +10,20 @@
 ---
 # Proyecto 2 | Recuperación de Documentos de Texto
 
-## Descripción del dominio de datos
-## Introducción
+## Configuracion
+Para ejecutar el programa ingresar a la carpeta app y ejecutar el comando;
+```
+python3 app.py
+```
 
+El app puede ejecutarse con 100, 1000 o 100000 papers. Para seleccionar cual de las opciones modificar el valor de NUMBER_ENTRIES_OPTION en app/app.py (0:100, 1:1000, 2:0000).
+
+
+
+## Descripción del dominio de datos
+
+
+## Introducción
 
 La recuperación de documentos de texto basadas en el contenido es uno de los campos más estudiados en el área de base de datos, por ende, en el presente trabajo se tiene como objetivo entender y aplicar los algoritmos de búsqueda y recuperación, por lo que, este proyecto está enfocado en la construcción de un índice invertido para la realización de este tipo de tareas. Asimismo, se desarrollará una interfaz gráfica para poder comparar dichos resultados de Python con PostgreSQL y analizar los tiempos de recuperación. Cabe resaltar, que la data que se usará será de un repositorio de la página Kagle que tiene como temática los papers.
 
