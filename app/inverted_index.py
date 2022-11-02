@@ -646,7 +646,8 @@ class InvertedIndex:
                 tokenq = stemmer.stem(word)
                 if tokenq not in index_query:
                     index_query[tokenq] = 1
-                index_query[tokenq] += 1
+                else:
+                    index_query[tokenq] += 1
         
         # CALCULO DE TF.IDF de la QUERY y PROD COSENO
         norma_query = 0
