@@ -409,6 +409,23 @@ def  create_GIN_index(self,tables):
 ```
 ### Análisis comparativo con su propia implementación
 
+Se realizó la experimentación de nuestra implementación, las pruebas se ejecutaron con _database_ de 100, 1 000 y 10 000 _papers_, y _querys_ generadas aleatoriamente con palabras que se encontraron en nuestro índice invertido.
+
+>*QUERY 1*: fly me to the moon 
+>*Top K*: 5
+
+<img src="images/cuadro_query1.jpeg" alt="QUERY 1"/>
+
+>*QUERY 2*: lost in a wormhole
+>*Top K*: 5
+
+<img src="images/cuadro_query1.jpeg" alt="QUERY 2"/>
+
+>*QUERY 3*: finding a loophole in the law
+>*Top K*: 5
+
+<img src="images/cuadro_query1.jpeg" alt="QUERY 3"/>
+
 ### GUI
 
 Se realizó la implementación de una interfaz gráfica para que el usuario pueda interactuar con las funciones de búsqueda y recuperación de _papers_. Es intiutiva y amigable para el usuario, recoge la consulta y solicita que ingrese el _top k_, que es la cantidad de documentos a recuperar según la mayor similitud de su consulta.
