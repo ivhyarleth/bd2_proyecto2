@@ -8,8 +8,7 @@
 - Ponce Contreras, Luis Eduardo
 - Lapa Carhuamaca, Arleth Ivhy
 
-| CUADRO DE ACTIVIDADES                                      |
-|-----------------------|------------------------------------|
+*CUADRO DE ACTIVIDADES*
 | Rodrigo Salazar       | Implementación SPIMI               |
 | Juan Sara             | Implementación GIN index           |
 | Luis Ponce            | Implementación Frontend y Cloud    |
