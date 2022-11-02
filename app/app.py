@@ -8,10 +8,15 @@ from GIN import GIN_index
 # rutas
 from src.routes import papers_route
 
+
+NUMBER_ENTRIES_OPTION = 2
+
+
+
 app = Flask(__name__)
 tables = ['papers_100_v2','papers_1000_v2','papaers_10000_v2']
-
-inverted_index = InvertedIndex("arxiv-metadata-oai-snapshot.json")
+number_entries = [100,1000,10000]
+inverted_index = InvertedIndex("arxiv-metadata-oai-snapshot.json", number_entries[NUMBER_ENTRIES_OPTION])
 indice_GIN = GIN_index("arxiv-metadata-oai-snapshot.json")
 
 
@@ -30,10 +35,10 @@ def index():
 def kPrimeros():
     # Extract parameters
     consulta = request.form["consulta"]
-    k = request.form["topK"]
+    k = int(request.form["topK"])
     # Make querries
-    cosenos_inverted = inverted_index.compare_query(consulta)
-    cosenos_gin = indice_GIN.query_knn_table(tables[1],consulta,k)
+    cosenos_inverted = inverted_index.compare_query(consulta, k)
+    cosenos_gin = indice_GIN.query_knn_table(tables[NUMBER_ENTRIES_OPTION],consulta,k)
     print("Time inverted:", cosenos_inverted[1])
     print("Time gin:", cosenos_gin[1])
     # Return data

@@ -13,7 +13,7 @@ import pickle as serializer
 import io
 import time
 from itertools import islice
-
+import heapq
 import struct
 import time
     
@@ -29,7 +29,7 @@ stemmer = SnowballStemmer('english')
 
 
 ### FOR TESTING set positive
-NUMBER_OF_ENTRIES = 10000 #10000
+#NUMBER_OF_ENTRIES = 10000 #10000
 
 
 class InvertedIndex:
@@ -39,7 +39,7 @@ class InvertedIndex:
     """
     Class Initialization
     """    
-    def __init__(self, data_filename):
+    def __init__(self, data_filename , number_entries):
         # Origin File
         self.data_filename = data_filename
         # Binary Files
@@ -58,6 +58,7 @@ class InvertedIndex:
         # Calculate header struct size in bytes
         entry = ("sample".ljust(32).encode('ascii'),1,1,0.0)
         self.HEADER_LEN = len(struct.pack(self.HEADER_STRUCT, *entry))
+        self.NUMBER_OF_ENTRIES = number_entries
 
     
     ###################################################
@@ -322,14 +323,21 @@ class InvertedIndex:
     #                MAIN FUNCTIONS
     ###################################################
 
+    def clean_inverted_index(self):
+        files = [self.get_database_datafile_path(), self.get_database_headfile_path(0), self.get_indexfile_path(0)]
+        for f in files:
+            if os.path.exists(f):
+                os.remove(f)
+
     def create_inverted_index(self):
         
-        if os.path.isfile( self.get_indexfile_path(0) ):
-            # If index already exists. Skip
-            return
-
+        #if os.path.isfile( self.get_indexfile_path(0) ):
+        #    # If index already exists. Skip
+        #    return
+        self.clean_inverted_index()
 
         ## ------------------------- BUILD DATABASE ------------------------
+        print(">>> BUILD DATABASE <<<")
         # Load JSON data file to database
         datastream = self.read_datafile()
         paper_count = 0
@@ -356,30 +364,39 @@ class InvertedIndex:
             block_header.append(paper_head_entry)
 
             if self.memory_usage_block_list_header(block_header) > self.max_memory_usage:
-                print("MEMORY USAGE EXCEEDED: count {}".format(paper_count))
+                print("INFO: Memory usage exceeded at count {}. Creating new batch.".format(paper_count))
                 # Save block list
                 self.save_header_database(block_header, headerfile_id)
                 block_header = []
                 headerfile_id += 1
                 saved = True
             
-            ## DEBUG
-            if (paper_count==1000):
-                break
             paper_count += 1
+            if (paper_count%500) == 0:
+                print("INFO: Paper count:", paper_count)
+            ########################## DEBUG ##########################
+            # Limit number of entries for testing                     #
+            ###########################################################
+            if paper_count == self.NUMBER_OF_ENTRIES: 
+                break
+            ###########################################################
+            
 
         if not saved:
+            print("INFO: Saving last block")
             self.save_header_database(block_header, headerfile_id)
             headerfile_id += 1
         
         # Merge Headers in sorted form
+        print(">>> MERGE HEADERS DATABASE <<<")
         number_headerfiles = headerfile_id-1
         merge_step = 2
+        print("INFO: Original HeaderFile Number ", number_headerfiles)
         while (number_headerfiles): # While more than 1 header
             tmpfile_id = 0
             for i in range(0,number_headerfiles+1, merge_step):
                 if (number_headerfiles >= i+1):
-                    print("HEADER FILES MERGED:",i," <> ",i+1)
+                    print("INFO: HeaderFiles Merged:",i," <> ",i+1)
                     block_a = self.read_headerfile(i)
                     block_b = self.read_headerfile(i+1)
                     valid_a = True
@@ -425,18 +442,16 @@ class InvertedIndex:
                     self.remove_headerfile(i+1)
                     self.rename_headertmpfile(tmpfile_id)
                 else:
-                    print("SINGLE HEADER FILE SKIPPED:",i)
+                    print("INFO: Single Header File Skipped:",i)
                     tmpfile_id+=1
                     self.rename_headerfile(i, tmpfile_id)
 
             # Update number of files
             number_headerfiles = tmpfile_id
-            print("NUMBER OF HEADER FILES:", number_headerfiles)
-
-        
-        
-        
+            print("INFO: Current Number of HeaderFiles:", number_headerfiles)
+            
         ## ------------------------- CREATE INDEX ------------------------
+        print(">>> BUILD INDEX <<<")
         headerfile = self.read_headerfile(0)
 
         # SPIMI INVERT
@@ -469,19 +484,12 @@ class InvertedIndex:
                     else:
                         block_dict[stem_token] = {}
                         block_dict[stem_token][paper_id] = 1
-            # Check if filesize exceeded
-            #print("MEMORY USAGE: {}".format(self.memory_usage_block_dict(block_dict)))
             paper_count += 1
-            #############################################################
-            #                       FOR TESTING
-            #############################################################
             if (paper_count%500) == 0:
-                print("PAPER COUNT:", paper_count)
-            if paper_count == NUMBER_OF_ENTRIES: 
-                break
-            #############################################################
+                print("INFO: Paper count:", paper_count)
+            # Check if filesize exceeded
             if self.memory_usage_block_dict(block_dict) > self.max_memory_usage:
-                print("MEMORY USAGE EXCEEDED: count {}".format(paper_count))
+                print("INFO: Memory usage exceeded at count {}. Creating new batch.".format(paper_count))
                 # Save block dict
                 self.save_block_dict(block_dict, indexfile_id)
                 block_dict = {}
@@ -489,19 +497,22 @@ class InvertedIndex:
                 saved = True
         # If last block not saved, save
         if not saved:
+            print("INFO: Saving last block")
             self.save_block_dict(block_dict, indexfile_id)
             indexfile_id += 1
         number_indexfiles = indexfile_id-1
 
         # SPIMI MERGE
+        print(">>> MERGE INDEX <<<")
         merge_step = 2 #merge_total_levels = math.ceil( (number_indexfiles+1) **(1/2))
 
-        print("ORIGINAL INDEX FILE NUMBER:", number_indexfiles)
+        print("INFO: Original IndexFile Number ", number_indexfiles)
         while (number_indexfiles): # While more than 1 file
             tmpfile_id = 0
             for i in range(0,number_indexfiles+1, merge_step):
-                print("FILE POINTER:",i)
+                print("INFO: IndexFile Pointer ",i)
                 if (number_indexfiles >= i+1):
+                    print("INFO: IndexFiles Merged:",i," <> ",i+1)
                     block_a = self.read_indexfile(i)
                     block_b = self.read_indexfile(i+1)
                     tmpfile_id = int(i/2) 
@@ -583,9 +594,10 @@ class InvertedIndex:
 
             # Update number of files
             number_indexfiles = tmpfile_id
-            print("NUMBER OF INDEX FILES:", number_indexfiles)
+            print("INFO: Current Number of IndexFiles:", number_indexfiles)
         
         # ADD TF.IDF TO INDEX
+        print(">>> CALCULATING TFIDF <<<")
         base_index = self.read_indexfile(i)
         word_block = self.read_jsonblock(next(base_index))
         while (True):
@@ -612,15 +624,15 @@ class InvertedIndex:
             except:
                 break
         # UPDATE NORM TO SQRT
-        self.sqrt_header_norm_database()        
-        
-
+        print(">>> UPDATE NORM <<<")
+        self.sqrt_header_norm_database()
         # OVERWRITE INDEX
         self.rename_tmpfile(0)
 
+        print(">>> --- END --- <<<")
 
 
-    def compare_query(self, query):
+    def compare_query(self, query, k):
         start_time = time.time()
         
         query = self.clean_text(query)
@@ -659,24 +671,24 @@ class InvertedIndex:
         # Normalizar
         similarity = []
         for paper_id in papers_data:
+            # Calculate Cosine Norm
             data_pos = self.search_header_database(paper_id.encode('ascii'))
             data = self.extract_header_database(data_pos)
             papers_data[paper_id]["norm"] = data[3]
             papers_data[paper_id]["cos"] = papers_data[paper_id]["cos"] / (norma_query * papers_data[paper_id]["norm"])
-            similarity.append( {"paper":paper_id, "similarity":papers_data[paper_id]["cos"]} )
-
-        #print(similarity)
-        with io.open('cosenos.json', 'w', encoding='utf8') as outfile:
-            str_ = json.dumps(similarity,
-                                indent=4, sort_keys=True,
-                                separators=(',', ': '), ensure_ascii=False)
-            outfile.write(str_)
+            sim = papers_data[paper_id]["cos"]
+            # KNN with heap
+            if len(similarity) < k:
+                heapq.heappush(similarity, (sim, paper_id))
+            else:
+                current_max = similarity[0]
+                if current_max[0] < sim:
+                    heapq.heappop(similarity)
+                    heapq.heappush(similarity, (sim, paper_id))
 
         # Transform similarity to expected output by frontend
         data_index = []
-        for paper_dict in similarity:
-            sim = paper_dict["similarity"]
-            paper_id = paper_dict["paper"]
+        for sim, paper_id in similarity:
             header_data_pos = self.search_header_database(paper_id.encode('ascii'))
             header_data = self.extract_header_database(header_data_pos)
             info = self.extract_paper_database(header_data[1],header_data[2])
@@ -684,6 +696,13 @@ class InvertedIndex:
             data_index.append(
                     {"val": str(sim), "info": info}
             )
+
+        #print(similarity)
+        #with io.open('cosenos.json', 'w', encoding='utf8') as outfile:
+        #    str_ = json.dumps(similarity,
+        #                        indent=4, sort_keys=True,
+        #                        separators=(',', ': '), ensure_ascii=False)
+        #    outfile.write(str_)
 
         return [sorted(data_index, key=lambda v: v['val'], reverse=True), round((time.time()-start_time)*1000, 4)]
 
