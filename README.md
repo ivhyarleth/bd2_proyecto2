@@ -3,10 +3,11 @@
 
 **_Integrantes:_**
 
-- Salazar Alva, Rodrigo Gabriel
-- Sara Junco, Juan Sebastian
-- Ponce Contreras, Luis Eduardo
-- Lapa Carhuamaca, Arleth Ivhy
+- Salazar Alva, Rodrigo Gabriel : Implementacion SPIMI y Gestion de Memoria Secundaria
+- Sara Junco, Juan Sebastian : Implementacion Postgres
+- Ponce Contreras, Luis Eduardo : Implementacion Frontend y Cloud
+- Lapa Carhuamaca, Arleth Ivhy: Implementacion Indice
+
 ---
 # Proyecto 2 | Recuperación de Documentos de Texto
 
