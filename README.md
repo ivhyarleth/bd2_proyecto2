@@ -430,6 +430,18 @@ Se realizó la experimentación de nuestra implementación, las pruebas se ejecu
 
 <img src="images/cuadro_query3.jpeg" alt="QUERY 3" width="400"/>
 
+Como se obserar en las graficas correspondientes a las pruebas realizadas, los tiempos de ejecuccion de GIN y nuestra implementacion de indice invertido son comparables en tiempo: se encuentran aproximadamente dentro del mismo orden de magnitud para todos los casos.
+
+Cabe destacar que en terminos generales, el indice invertido tiene una mejor eficiencia que GIN para los valores mas pequeños de datos. Sin embargo, con el tamaño de base de datos mas grande, GIN tiene mejor eficiencia. En este sentido, este comportamiento se atribuye a las siguientes razones:
+
+1) La complejidad de extraccion de los topK en el IndiceInvertido no depende solo del tamaño de la base de datos, sino que tambien del numero de coincidencia entre la query y los documentos. En este sentido, una diferencial importante entre nuestra implementacion y la de postgres es el preprocesamiento y extraccion de tokens: nuestra tokenizacion es mas perdonadora generando una mayor cobertura. Esto se puede ver en consultas donde, pese a usar la misma query, el IndiceInvertido devuelve documentos con baja similitud mientras que postgres simplemente no devuelve nada. Esto hace que el IndiceInvertido tenga que procesar un mayor numero de documentos al resolver la consulta, haciendo que la complejidad crezca mas rapido.
+
+2) Postgres es un gestor de base de datos centrado en "relaibility" con lo que tiene componentes que crean overhead a la resolucion de la consulta. Esto le da una ventaja a nuestra implementacion.
+
+
+Sin embargo, tambien es important considerar que el analisis realizado corresponde a los resultados del EXPLAIN ANALYZE de Postgres, los cuales son predicciones y no el tiempo que tomo realmente. Mas aun, al correr en un servidor, se espera que la instancia de postgres tenga un mejor poder de procesamiento.
+
+No obstante, la conclusion final es la misma: las implementaciones tiene tiempos de ejecuccion comparables. El indice invertido tiene el potencial de tener una mejor eficiencia que la implementacion de GIN de postgres siempre y cuando se use el mismo metodo de tokenizacion dado a que esta diferencial tiene un impacto significativo en el tiempo de ejecucion a medida que el numero de documentos incremnta.
 
 ### GUI
 
