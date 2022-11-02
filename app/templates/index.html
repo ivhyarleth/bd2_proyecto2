@@ -38,6 +38,8 @@
       $(document).ready(function() {
         $("#post-form").click(function(e) {
           $("#table_index").empty();
+          $("#table_postgresql").empty();
+
           var consulta = $('#input_consulta').val();
           var topK = $("#input_dos").val();
           $.ajax({
@@ -52,15 +54,26 @@
                 console.log(x);
                 var row = "<tr><td>"+x["info"]["id"]+"</td><td>"+x["info"]["submitter"]+"</td><td>"+x["info"]["authors"]+"</td><td>"+x["info"]["title"]+"</td><td>"+x["info"]["comments"].substring(0,40)+"</td><td>"+x["info"]["journal-ref"]+"</td><td>"+x["info"]["doi"]+"</td><td>"+x["info"]["abstract"].substring(0,40) + " ... "+"</td><td>"+x["info"]["categories"]+"</td><td>"+x["info"]["versions"].length+"</td></tr>"
                 $("#table_index").append(row);
+                
+              });
+              response["data_pg"].forEach((x,i) => {
+                console.log(x);
+                var row = "<tr><td>"+x["info"]["id"]+"</td><td>"+x["info"]["submitter"]+"</td><td>"+x["info"]["authors"]+"</td><td>"+x["info"]["title"]+"</td><td>"+x["info"]["comments"].substring(0,40)+"</td><td>"+x["info"]["journal-ref"]+"</td><td>"+x["info"]["doi"]+"</td><td>"+x["info"]["abstract"].substring(0,40) + " ... "+"</td><td>"+x["info"]["categories"]+"</td><td>"+x["info"]["versions"].length+"</td></tr>"
+                $("#table_postgresql").append(row);
               });
               $("#tiempo-python").text("Tiempo " + response["tiempo_py"] + " ms.")
+              $("#tiempo-postgres").text("Tiempo " + response["tiempo_pg"] + " ms.")
+
             },
             error: function(error) {
               console.log(error);
             }
           });
+          
+
           e.preventDefault();
         });
+        
       });
     </script>
   </head>
@@ -166,7 +179,7 @@
                 </tr>
               </thead>
               <tbody id="table_postgresql">
-                {%for paper_search in data_papers_postgresql%}
+                {%for paper_search in data_papers_index%}
                 <tr>
                   <td>{{ paper_search.id }}</td>
                   <td>{{ paper_search.submitter }}</td>
@@ -190,7 +203,7 @@
           <span id="tiempo-python"></span>
         </div>
         <div class="col-6">
-          <span> Tiempo: 30ms</span>
+          <span id="tiempo-postgres"></span>
         </div>
       </div>
     </div>
