@@ -122,7 +122,7 @@ Para ello, se maneja con cuatro archivos principales:
 
 - database_head0.bin : Archivo binario que sirve como cabecera para database_data.bin, garantizando acceso en _O(1)_ y búsqueda en _O(log n)_
 
-- indice_invertido0.json : Archivo de texto de invertido invertido. Contiene la data asociada a cada palabra
+- indice_invertido0.json : Archivo de texto de Índice Invertido. Contiene la data asociada a cada palabra
 
 - indice_head.bin: Archivo binario que sirve como cabecera para indice_invertido0.json, garantizando acceso en _O(1)_ y búsqueda en _O(log n)_
 
