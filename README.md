@@ -11,7 +11,9 @@
 # Proyecto 2 | Recuperación de Documentos de Texto
 
 ## Configuracion
-Para ejecutar el programa ingresar a la carpeta app y ejecutar el comando;
+Antes de ejecutar el programa es necesario descargar la base de datos de kaggle (https://www.kaggle.com/datasets/Cornell-University/arxiv), descomprimirla y colocar el archivo json en: app/data/arxiv-metadata-oai-snapshot.json
+
+Para ejecutar el programa ingresar a la carpeta app y ejecutar el comando:
 ```
 python3 app.py
 ```
@@ -21,11 +23,11 @@ El app puede ejecutarse con 100, 1000 o 100000 papers. Para seleccionar cual de 
 
 
 ## Descripción del dominio de datos
-
+La fuente de datos del presente proyecto es un repositorio de la pagina de Kaggle cuyo dominio de datos es papers academicos. Las columnas de este repositorio son: ID, SUBMITTER, AUTHORS, TITLE, COMMENTS, JOURNAL, DOI, ABSTRACT, CATEGORIES, VERSIONS. Notese como la mayoria de estos atributos son de longitud variable, por lo que el tipo de queries que se realizaran son de recuperacion de informacion, en las que se buscara extraer los k elementos cuyo contenido sea más similar al de una query proveida en lenguaje natural.
 
 ## Introducción
 
-La recuperación de documentos de texto basadas en el contenido es uno de los campos más estudiados en el área de base de datos, por ende, en el presente trabajo se tiene como objetivo entender y aplicar los algoritmos de búsqueda y recuperación, por lo que, este proyecto está enfocado en la construcción de un índice invertido para la realización de este tipo de tareas. Asimismo, se desarrollará una interfaz gráfica para poder comparar dichos resultados de Python con PostgreSQL y analizar los tiempos de recuperación. Cabe resaltar, que la data que se usará será de un repositorio de la página Kagle que tiene como temática los papers.
+La recuperación de documentos de texto basadas en el contenido es uno de los campos más estudiados en el área de base de datos, por ende, en el presente trabajo se tiene como objetivo entender y aplicar los algoritmos de búsqueda y recuperación, por lo que, este proyecto está enfocado en la construcción de un índice invertido para la realización de este tipo de tareas. Asimismo, se desarrollará una interfaz gráfica para poder comparar dichos resultados de Python con PostgreSQL y analizar los tiempos de recuperación. Cabe resaltar, que la data que se usará será de un repositorio de la página Kaggle que tiene como temática los papers.
 
 El siguiente informe se basará en dos aspectos. En primer lugar, se implementará el Índice Invertido utilizando un modelo de recuperación basado en ranking para consultas de texto libre. En adición, el scoring se debe de aplicar todo en memoria secundaria, por ende se usará el algoritmo de Single-pass in-memory indexing (SPIMI) para el cálculo de la similitud de coseno. En segundo lugar, se utilizará el índice GIN para poder ejecutar las consultas en PostgreSQL y de esa forma poder realizar un análisis, discusión y comparación de los resultados.
 
